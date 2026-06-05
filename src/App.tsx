@@ -116,7 +116,7 @@ function App() {
           />
           <span className="site-brand__sep" aria-hidden />
           <p className="site-brand__name">
-            <strong>Gabin</strong> CHAMEROY
+            <strong>Gabin</strong> CHAMEROY : TEST
           </p>
         </div>
 
