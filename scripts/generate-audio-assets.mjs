@@ -3,7 +3,7 @@
  * Nécessite ffmpeg sur le PATH.
  */
 import { spawn } from 'node:child_process'
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -94,10 +94,28 @@ async function generateWebMp3() {
   console.log(`web mp3 → ${webPath}`)
 }
 
+function assetsAreUpToDate() {
+  if (!existsSync(waveformPath) || !existsSync(webPath)) {
+    return false
+  }
+
+  const masterMtime = statSync(masterPath).mtimeMs
+  return (
+    statSync(waveformPath).mtimeMs >= masterMtime &&
+    statSync(webPath).mtimeMs >= masterMtime
+  )
+}
+
 async function main() {
   if (!existsSync(masterPath)) {
     console.error(`Missing master: ${masterPath}`)
     process.exit(1)
+  }
+
+  const force = process.argv.includes('--force')
+  if (!force && assetsAreUpToDate()) {
+    console.log('Audio assets up to date, skipping generation.')
+    return
   }
 
   await generateWaveform()
