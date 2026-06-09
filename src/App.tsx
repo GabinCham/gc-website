@@ -1,12 +1,4 @@
-import {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SITE_TRACK } from './audio'
 import { AppBackground } from './components/AppBackground'
 import { AudioPlayer } from './components/AudioPlayer'
@@ -37,8 +29,9 @@ const INITIAL_ITEM = FAVORITE_ITEMS[0] ?? GALLERY_ITEMS[0]!
 function App() {
   const mountGallery = useIdleMount()
   const [galleryReady, setGalleryReady] = useState(false)
+  const [filterLoading, setFilterLoading] = useState(false)
   const [filterLoaderVisible, setFilterLoaderVisible] = useState(false)
-  const [isFilterPending, startFilterTransition] = useTransition()
+  const skipFilterLoader = useRef(true)
   const [mode, setMode] = useState<LayoutMode>('all')
   const [category, setCategory] = useState<GalleryCategory | null>(DEFAULT_CATEGORY)
 
@@ -65,25 +58,14 @@ function App() {
   }, [])
 
   const selectCategory = useCallback((next: GalleryCategory) => {
-    startFilterTransition(() => {
-      setMode('all')
-      setCategory((current) => (current === next ? null : next))
-    })
-  }, [startFilterTransition])
-
-  const selectAll = useCallback(() => {
-    startFilterTransition(() => {
-      setMode('all')
-      setCategory(null)
-    })
-  }, [startFilterTransition])
+    setMode('all')
+    setCategory((current) => (current === next ? null : next))
+  }, [])
 
   const selectSimple = useCallback(() => {
-    startFilterTransition(() => {
-      setCategory(null)
-      setMode('simple')
-    })
-  }, [startFilterTransition])
+    setCategory(null)
+    setMode('simple')
+  }, [])
 
   const handleItemSelect = useCallback((item: GalleryItem) => {
     if (item.href) {
@@ -96,16 +78,30 @@ function App() {
 
   const handleGalleryReady = useCallback(() => {
     setGalleryReady(true)
+    setFilterLoading(false)
+  }, [])
+
+  const handleGallerySettled = useCallback(() => {
+    setFilterLoading(false)
   }, [])
 
   useEffect(() => {
-    if (!isFilterPending || !galleryReady) {
+    if (!galleryReady) return
+    if (skipFilterLoader.current) {
+      skipFilterLoader.current = false
+      return
+    }
+    setFilterLoading(true)
+  }, [galleryCategory, mode, galleryReady])
+
+  useEffect(() => {
+    if (!filterLoading || !galleryReady) {
       setFilterLoaderVisible(false)
       return
     }
-    const id = window.setTimeout(() => setFilterLoaderVisible(true), 250)
+    const id = window.setTimeout(() => setFilterLoaderVisible(true), 200)
     return () => clearTimeout(id)
-  }, [isFilterPending, galleryReady])
+  }, [filterLoading, galleryReady])
 
   const preloadFilterModel = useCallback((filterCategory: GalleryCategory | null) => {
     void import('./gallery/preloadCenterModel').then(({ preloadCenterModelForCategory }) => {
@@ -136,7 +132,7 @@ function App() {
             onItemSelect={handleItemSelect}
             onCardHoverChange={setCardHovered}
             onReady={handleGalleryReady}
-            isFilterTransitioning={isFilterPending}
+            onSettled={handleGallerySettled}
           />
         </Suspense>
       ) : null}
@@ -196,7 +192,10 @@ function App() {
           <button
             type="button"
             className={mode === 'all' && category === null ? 'active' : ''}
-            onClick={selectAll}
+            onClick={() => {
+              setMode('all')
+              setCategory(null)
+            }}
             onMouseEnter={() => preloadFilterModel(null)}
             onFocus={() => preloadFilterModel(null)}
           >

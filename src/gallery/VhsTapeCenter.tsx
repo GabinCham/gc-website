@@ -14,6 +14,8 @@ const TARGET_SIZE = 1.35
 type VhsTapeCenterProps = {
   offsetRef: RefObject<number>
   modelUrl?: string
+  /** Réduction mobile — même ratio que les cartes pour rester proportionnel. */
+  responsiveScale?: number
 }
 
 function lerp3(
@@ -55,6 +57,7 @@ function prepareVhsModel(scene: THREE.Group) {
 export function VhsTapeCenter({
   offsetRef,
   modelUrl = CENTER_MODEL_DEFAULT,
+  responsiveScale = 1,
 }: VhsTapeCenterProps) {
   const { scene } = useLoader(GalleryGLTFLoader, modelUrl)
   const groupRef = useRef<THREE.Group>(null)
@@ -98,7 +101,7 @@ export function VhsTapeCenter({
       spiral.rotation[1] + tuning.rotation[1] * DEG2RAD,
       spiral.rotation[2] + tuning.rotation[2] * DEG2RAD,
     )
-    inner.scale.setScalar(tuning.scale)
+    inner.scale.setScalar(tuning.scale * responsiveScale)
   })
 
   return (

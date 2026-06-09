@@ -5,7 +5,7 @@ const FRONT_ANGLE = Math.PI / 2
 
 /** Espacement fixe entre deux slots (ne dépend pas du nombre de projets) */
 export function getHelixSpacing() {
-  const span = Math.max(SPIRAL.referenceItemCount - 1, 1)
+  const span = Math.max(SPIRAL.maxVisibleCards - 1, 1)
   return {
     angleStep: (SPIRAL.turns * Math.PI * 2) / span,
     heightStep: SPIRAL.height / span,

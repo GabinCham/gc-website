@@ -18,7 +18,8 @@ import {
   isSpiralVideoSlot,
 } from './spiralInfinite'
 import { getGalleryScrollVelocity } from './galleryScrollSpeed'
-import { CARD_SIZE, getCardLayout, type LayoutMode } from './layouts'
+import { getCardLayout, type LayoutMode } from './layouts'
+import { useGalleryResponsiveLayout } from './useGalleryResponsiveScale'
 import { useGalleryScroll } from './useGalleryScroll'
 import { GalleryAssetsReady } from './GalleryAssetsReady'
 import { getCenterModelUrl } from './centerModels'
@@ -140,7 +141,8 @@ export function CurvedWheelGallery({
     }
   })
 
-  const cardSize = CARD_SIZE[mode]
+  const { scale: galleryScale, cardSize, centerModelScale } =
+    useGalleryResponsiveLayout(mode)
   const offset = offsetRef.current
   const frontSlot = frontSlotRef.current
 
@@ -179,12 +181,13 @@ export function CurvedWheelGallery({
       <directionalLight position={[0, 8, 2]} intensity={0.45} color="#ffffff" />
 
       <Suspense fallback={null}>
-        <group position={[0, GALLERY_GROUP_Y, 0]}>
+        <group position={[0, GALLERY_GROUP_Y, 0]} scale={galleryScale}>
           {isAll ? (
             <VhsTapeCenter
               key={centerModelUrl}
               offsetRef={offsetRef}
               modelUrl={centerModelUrl}
+              responsiveScale={centerModelScale}
             />
           ) : null}
           {visibleItems.map(({ slot, layout, item }) => (

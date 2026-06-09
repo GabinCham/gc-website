@@ -7,17 +7,37 @@ export type CardLayout = {
   scale: number
 }
 
+/**
+ * Nombre de cartes visibles à l'écran en mode spirale.
+ * Fixe l'espacement entre chaque carte sur l'hélice : valeur plus haute = cartes
+ * plus espacées (moins visibles en même temps), valeur plus basse = l'inverse.
+ * Indépendant du nombre total de projets dans la galerie.
+ */
+export const MAX_VISIBLE_CARDS = 22
+
+/**
+ * Largeur viewport (px) en dessous de laquelle la spirale garde l'échelle desktop
+ * et déborde volontairement de l'écran, plutôt que de se réduire pour tout faire tenir.
+ */
+export const MOBILE_SPIRAL_BREAKPOINT = 768
+
+/**
+ * Fraction de la largeur visible occupée par la carte centrale sur mobile.
+ * Réduit la taille des cartes (ratio conservé) pour qu'elles ne soient pas coupées
+ * sur les bords, sans réduire la spirale elle-même.
+ */
+export const MOBILE_CARD_WIDTH_FRACTION = 0.88
+
 export const SPIRAL = {
-  radius: 5.2, /*/ TODO: ajuster selon la taille de l'écran /*/
+  radius: 5.2,
   height: 14,
   turns: 2.5,
   cardWidth: 3.022, // 1.7 * (16/9)
   cardHeight: 1.7,
-  /** Espacement calibré pour ~25 cartes — indépendant du nb de projets actifs */
-  referenceItemCount: 25,
+  maxVisibleCards: MAX_VISIBLE_CARDS,
 }
 
-const LIST = {
+export const LIST = {
   columns: 4,
   gapX: 2,
   gapY: 2,
