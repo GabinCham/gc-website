@@ -122,7 +122,11 @@ function loadVhsTuningForModel(modelUrl: string): VhsTuning {
       return mergeTuning(defaults, JSON.parse(raw) as Partial<VhsTuning>)
     }
 
-    if (modelUrl === CENTER_MODEL_DEFAULT) {
+    const isDefaultK7 =
+      modelUrl === CENTER_MODEL_DEFAULT ||
+      modelUrl === '/K7.glb' ||
+      modelUrl === 'glb/K7.glb'
+    if (isDefaultK7) {
       const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
       if (legacy) {
         return mergeTuning(defaults, JSON.parse(legacy) as Partial<VhsTuning>)

@@ -1,7 +1,8 @@
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { CurvedWheelGallery } from './CurvedWheelGallery'
+import { preloadCenterModelForCategory } from './preloadCenterModel'
 import { type GalleryCategory, type GalleryItem } from './images'
 import type { LayoutMode } from './layouts'
 
@@ -38,6 +39,11 @@ export function GalleryScene({
   onCardHoverChange,
   onReady,
 }: GallerySceneProps) {
+  useEffect(() => {
+    if (mode !== 'all') return
+    preloadCenterModelForCategory(category)
+  }, [mode, category])
+
   return (
     <Canvas
       className="gallery-canvas"

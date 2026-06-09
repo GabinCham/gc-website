@@ -14,7 +14,7 @@ const originalsDir = join(root, 'assets', 'glb-original')
 const MODELS = [
   { source: 'handycam.glb', output: 'public/glb/handycam.glb' },
   { source: '90s_computer.glb', output: 'public/glb/90s_computer.glb' },
-  { source: 'K7.glb', output: 'public/K7.glb' },
+  { source: 'K7.glb', output: 'public/glb/K7.glb' },
 ]
 
 const TEXTURE_SIZE = 1024

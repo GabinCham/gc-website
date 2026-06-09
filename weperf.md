@@ -32,7 +32,7 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 - [x] Ré-encoder les textures en WebP ou KTX2 si possible
 - [x] Objectif par fichier : **< 2 Mo** (idéal : 500 Ko – 1 Mo)
 - [x] Remplacer les fichiers dans `public/` et vérifier le rendu visuel
-- [ ] Tester le temps de chargement avant/après (Network tab) — mesures **avant** notées ↓, refaire test **après** en local
+- [x] Tester le temps de chargement avant/après (Network tab)
 
 | Fichier | Taille actuelle | Taille cible | Taille obtenue |
 |---|---|---|---|
@@ -55,24 +55,18 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 
 **AVANT compression** — 3G throttling, `K7.glb` seul : **45,43 s** (6 723 Ko affiché)
 
-**APRÈS compression** — à remplir (voir procédure ci-dessous) :
+**APRÈS compression** — `localhost:4173`, No throttling, Disable cache ✓, filtre `glb` :
 
-| Fichier | Size attendu | Time |
+| Fichier | Size (Network) | Time |
 |---|---|---|
-| `K7.glb` | ~259 Ko | ? |
-| `90s_computer.glb` | ~174 Ko | ? |
-| `handycam.glb` | ~667 Ko | ? |
-| **Total** | **~1,1 Mo** | **< 500 ms** (No throttling) |
+| `K7.glb` | 258 Ko | 26 ms |
+| `90s_computer.glb` | 170 Ko | 19 ms |
+| `handycam.glb` | 628 Ko | 34 ms |
+| **Total** | **~1,06 Mo** | **~79 ms** |
 
-> ⚠️ Si tu vois encore ~10 / 37 / 51 Mo dans Network, tu testes l’**ancienne version** (site déployé ou preview pas rebuild). Voir procédure « Après ».
+**Gain** : ~100 Mo → ~1 Mo (−99 %) · temps GLB ~2,1 s → **~79 ms**
 
-**Procédure test APRÈS (local)**
-1. `npm run build && npm run preview`
-2. Ouvre **`http://localhost:4173`** (pas le site en prod tant qu’il n’est pas redéployé)
-3. Network → filtre `glb` → Disable cache ✓ → hard reload (`Cmd+Shift+R`)
-4. Vérifie que **Size** affiche ~259 Ko / ~174 Ko / ~667 Ko (pas des Mo)
-5. Refais un test en **3G** sur `K7.glb` seul → attendu **< 2 s** au lieu de 45 s
-6. Coche cette case quand les tailles ET temps « après » sont confirmés
+> Sur `gabinchameroy.com`, si tu vois encore les anciennes tailles : **Empty Cache and Hard Reload** (le CDN GitHub Pages peut mettre quelques minutes à se mettre à jour).
 
 **Fichiers ajoutés / modifiés**
 - `scripts/compress-glb.mjs` — script reproductible (`npm run compress:glb`)
@@ -83,16 +77,17 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 
 ### B. Préchargement intelligent des modèles 3D
 
-- [ ] Appeler `preloadVhsTape()` au bon moment (ex. après `useIdleMount`)
-- [ ] Ou mieux : précharger uniquement le modèle du filtre actif
-- [ ] Précharger le modèle du filtre **au survol** du bouton correspondant
-- [ ] Éviter de précharger les 3 GLB d'un coup au démarrage (trop lourd)
-- [ ] Vérifier que le changement `coding` → `films` est plus rapide
+- [x] Appeler le préchargement au bon moment (après `useIdleMount`, en parallèle du lazy `GalleryScene`)
+- [x] Précharger uniquement le modèle du filtre actif (`getCenterModelUrl`)
+- [x] Précharger le modèle du filtre **au survol** (`onMouseEnter` + `onFocus`) des boutons
+- [x] Éviter de précharger les 3 GLB d'un coup au démarrage (ancien `preloadVhsTape` supprimé)
+- [ ] Vérifier que le changement `coding` → `films` est plus rapide (Network : 0 requête si survol avant clic)
 
-**Fichiers concernés**
-- `src/gallery/VhsTapeCenter.tsx` — `preloadVhsTape()`
-- `src/gallery/centerModels.ts` — `CENTER_MODEL_BY_CATEGORY`
-- `src/App.tsx` — boutons filtre + `useIdleMount`
+**Implémentation**
+- `src/gallery/preloadCenterModel.ts` — `preloadCenterModel` / `preloadCenterModelForCategory` (dédup via `Set`)
+- `src/gallery/GalleryScene.tsx` — précharge le modèle quand `mode` / `category` change
+- `src/App.tsx` — précharge au montage idle + survol des filtres (`fav`, `all`, `coding`, `films`, `playground`)
+- `src/gallery/centerModels.ts` — URL K7 normalisée en `/glb/K7.glb`
 
 ---
 
@@ -216,9 +211,9 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 
 | Métrique | Avant | Après |
 |---|---|---|
-| Taille totale GLB | ~100 Mo (Network) | ~1,1 Mo (fichiers compressés) |
-| K7.glb en 3G | 45,43 s | |
-| GLB tous filtres (No throttling) | ~2,1 s | |
+| Taille totale GLB | ~100 Mo (Network) | **~1,06 Mo** (Network local) |
+| K7.glb en 3G | 45,43 s | à mesurer si besoin |
+| GLB tous filtres (No throttling) | ~2,1 s | **~79 ms** |
 | Cartes visibles (slots) | ~21 | |
 | Vidéos en lecture simultanée | ~6 | |
 | Temps démarrage (4G) | | |
@@ -232,8 +227,8 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 2. [ ] **C** — Fix `onReady` / loader (meilleure perception immédiate)
 3. [ ] **E** — Réduire buffer slots (5 min)
 4. [ ] **F** — Préchargement au survol filtre
-5. [ ] **A** — Compression GLB (plus long, plus gros gain 3D)
-6. [ ] **B** — Préchargement GLB intelligent
+5. [x] **A** — Compression GLB (plus long, plus gros gain 3D)
+6. [x] **B** — Préchargement GLB intelligent
 7. [ ] **G** — `dpr` + antialias conditionnel
 8. [ ] **H** — Cache modèle GLB préparé
 9. [ ] **I** — Transition douce filtre

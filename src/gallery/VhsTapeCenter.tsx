@@ -3,7 +3,7 @@ import { useFrame, useLoader } from '@react-three/fiber'
 import { GalleryGLTFLoader } from './galleryGltfLoader'
 import * as THREE from 'three'
 import { getSpiralCenterTransform } from './spiralInfinite'
-import { CENTER_MODEL_DEFAULT, CENTER_MODEL_URLS } from './centerModels'
+import { CENTER_MODEL_DEFAULT } from './centerModels'
 import { setActiveCenterModel, vhsTuningRef } from './vhsTuning'
 
 const DEG2RAD = Math.PI / 180
@@ -110,8 +110,4 @@ export function VhsTapeCenter({
   )
 }
 
-export function preloadVhsTape() {
-  for (const url of CENTER_MODEL_URLS) {
-    useLoader.preload(GalleryGLTFLoader, url)
-  }
-}
+export { preloadCenterModel, preloadCenterModelForCategory } from './preloadCenterModel'

@@ -1,6 +1,6 @@
 import type { GalleryCategory } from './images'
 
-export const CENTER_MODEL_DEFAULT = 'glb/K7.glb'
+export const CENTER_MODEL_DEFAULT = '/glb/K7.glb'
 
 const CENTER_MODEL_BY_CATEGORY: Partial<Record<GalleryCategory, string>> = {
   coding: '/glb/90s_computer.glb',

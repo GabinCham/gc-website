@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { SITE_TRACK } from './audio'
 import { AppBackground } from './components/AppBackground'
 import { AudioPlayer } from './components/AudioPlayer'
@@ -77,6 +77,17 @@ function App() {
     setGalleryReady(true)
   }, [])
 
+  const preloadFilterModel = useCallback((filterCategory: GalleryCategory | null) => {
+    void import('./gallery/preloadCenterModel').then(({ preloadCenterModelForCategory }) => {
+      preloadCenterModelForCategory(filterCategory)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!mountGallery || mode !== 'all') return
+    preloadFilterModel(galleryCategory)
+  }, [mountGallery, mode, galleryCategory, preloadFilterModel])
+
   return (
     <div className="app">
       <AppBackground colors={backgroundColors} cardHovered={cardHovered} />
@@ -127,6 +138,8 @@ function App() {
               mode === 'all' && category === 'fav' ? ' active' : ''
             }`}
             onClick={() => selectCategory('fav')}
+            onMouseEnter={() => preloadFilterModel('fav')}
+            onFocus={() => preloadFilterModel('fav')}
             aria-label="Favoris"
             aria-pressed={mode === 'all' && category === 'fav'}
           >
@@ -153,6 +166,8 @@ function App() {
               setMode('all')
               setCategory(null)
             }}
+            onMouseEnter={() => preloadFilterModel(null)}
+            onFocus={() => preloadFilterModel(null)}
           >
             all
           </button>
@@ -177,6 +192,8 @@ function App() {
                   mode === 'all' && category === filter ? 'active' : ''
                 }
                 onClick={() => selectCategory(filter)}
+                onMouseEnter={() => preloadFilterModel(filter)}
+                onFocus={() => preloadFilterModel(filter)}
               >
                 {filter}
               </button>
