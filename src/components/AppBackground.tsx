@@ -1,9 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
-import {
-  getGalleryMediaType,
-  getGalleryPosterUrl,
-  type GalleryItem,
-} from '../gallery/images'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { GalleryBackgroundColors } from '../gallery/images'
+import { MeshGradientCanvas } from './MeshGradientCanvas'
 
 const FADE_MS = 2200
 
@@ -11,76 +8,66 @@ function easeInOutCubic(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
 }
 
-type BackgroundMediaLayerProps = {
-  item: GalleryItem
-  opacity: number
-}
-
-function BackgroundMediaLayer({ item, opacity }: BackgroundMediaLayerProps) {
-  const isVideo = getGalleryMediaType(item) === 'video'
-  const posterUrl = isVideo ? getGalleryPosterUrl(item) : null
-  const videoRef = useRef<HTMLVideoElement>(null)
-
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video || !isVideo) return
-
-    if (opacity > 0.02) {
-      video.play().catch(() => {})
-    } else {
-      video.pause()
-    }
-  }, [isVideo, opacity])
-
-  if (opacity <= 0) return null
-
+function colorsEqual(a: GalleryBackgroundColors, b: GalleryBackgroundColors) {
   return (
-    <div
-      className="app-background__layer"
-      style={{ opacity }}
-      aria-hidden
-    >
-      {isVideo ? (
-        <video
-          ref={videoRef}
-          className="app-background__media"
-          src={item.url}
-          poster={posterUrl ?? undefined}
-          loop
-          muted
-          playsInline
-          preload="auto"
-        />
-      ) : (
-        <img
-          className="app-background__media"
-          src={item.url}
-          alt=""
-          decoding="async"
-        />
-      )}
-    </div>
+    a.accent === b.accent &&
+    a.base === b.base &&
+    (a.glow ?? a.accent) === (b.glow ?? b.accent) &&
+    (a.deep ?? a.base) === (b.deep ?? b.base)
   )
 }
 
+function lerpColors(
+  from: GalleryBackgroundColors,
+  to: GalleryBackgroundColors,
+  t: number,
+): GalleryBackgroundColors {
+  const mixHex = (a: string, b: string) => {
+    const parse = (hex: string) => {
+      const value = hex.replace('#', '')
+      return [
+        parseInt(value.slice(0, 2), 16),
+        parseInt(value.slice(2, 4), 16),
+        parseInt(value.slice(4, 6), 16),
+      ] as const
+    }
+
+    const [ar, ag, ab] = parse(a)
+    const [br, bg, bb] = parse(b)
+    const channel = (start: number, end: number) =>
+      Math.round(start + (end - start) * t)
+        .toString(16)
+        .padStart(2, '0')
+
+    return `#${channel(ar, br)}${channel(ag, bg)}${channel(ab, bb)}`
+  }
+
+  return {
+    accent: mixHex(from.accent, to.accent),
+    base: mixHex(from.base, to.base),
+    glow: mixHex(from.glow ?? from.accent, to.glow ?? to.accent),
+    deep: mixHex(from.deep ?? from.base, to.deep ?? to.base),
+  }
+}
+
 type AppBackgroundProps = {
-  item: GalleryItem
+  colors: GalleryBackgroundColors
   cardHovered?: boolean
 }
 
-export function AppBackground({ item, cardHovered = false }: AppBackgroundProps) {
-  const [fromItem, setFromItem] = useState(item)
-  const [toItem, setToItem] = useState(item)
+export function AppBackground({ colors, cardHovered = false }: AppBackgroundProps) {
+  const [from, setFrom] = useState(colors)
+  const [to, setTo] = useState(colors)
   const [mix, setMix] = useState(1)
-  const targetRef = useRef(item)
+  const targetRef = useRef(colors)
   const animRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (item.id === targetRef.current.id) return
+    if (colorsEqual(colors, targetRef.current)) return
 
-    setFromItem(targetRef.current)
-    setToItem(item)
-    targetRef.current = item
+    setFrom(targetRef.current)
+    setTo(colors)
+    targetRef.current = colors
     setMix(0)
 
     const start = performance.now()
@@ -100,11 +87,12 @@ export function AppBackground({ item, cardHovered = false }: AppBackgroundProps)
         cancelAnimationFrame(animRef.current)
       }
     }
-  }, [item])
+  }, [colors])
 
-  const showFrom = mix < 1
-  const fromOpacity = 1 - mix
-  const toOpacity = mix
+  const displayColors = useMemo(
+    () => lerpColors(from, to, mix),
+    [from, to, mix],
+  )
 
   return (
     <div
@@ -115,13 +103,9 @@ export function AppBackground({ item, cardHovered = false }: AppBackgroundProps)
       }
       aria-hidden
     >
-      <div className="app-background__media-stack">
-        {showFrom ? (
-          <BackgroundMediaLayer item={fromItem} opacity={fromOpacity} />
-        ) : null}
-        <BackgroundMediaLayer item={toItem} opacity={toOpacity} />
+      <div className="mesh-gradient">
+        <MeshGradientCanvas colors={displayColors} />
       </div>
-      <div className="app-background__ambient-overlay" />
       <div className="crt-overlay" />
     </div>
   )

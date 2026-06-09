@@ -8,6 +8,7 @@ import { VhsTuningPanel } from './components/VhsTuningPanel'
 import {
   GALLERY_ITEMS,
   filterGalleryByCategory,
+  type GalleryBackgroundColors,
   type GalleryCategory,
   type GalleryItem,
 } from './gallery/images'
@@ -43,8 +44,8 @@ function App() {
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true)
   const [activeItem, setActiveItem] = useState(INITIAL_ITEM)
-  const [backgroundItem, setBackgroundItem] = useState<GalleryItem>(
-    () => INITIAL_ITEM,
+  const [backgroundColors, setBackgroundColors] = useState<GalleryBackgroundColors>(
+    () => INITIAL_ITEM.backgroundColors,
   )
   const [cardHovered, setCardHovered] = useState(false)
 
@@ -53,7 +54,7 @@ function App() {
   }, [])
 
   const handleBackgroundItemChange = useCallback((item: GalleryItem) => {
-    setBackgroundItem(item)
+    setBackgroundColors(item.backgroundColors)
   }, [])
 
   const selectCategory = useCallback((next: GalleryCategory) => {
@@ -115,7 +116,7 @@ function App() {
 
   return (
     <div className="app">
-      <AppBackground item={backgroundItem} cardHovered={cardHovered} />
+      <AppBackground colors={backgroundColors} cardHovered={cardHovered} />
       <GalleryLoader
         hidden={galleryReady && !filterLoaderVisible}
         variant={galleryReady ? 'filter' : 'initial'}
