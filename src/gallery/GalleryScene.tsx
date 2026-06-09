@@ -15,7 +15,7 @@ type GallerySceneProps = {
   onItemSelect?: (item: GalleryItem) => void
   onCardHoverChange?: (hovered: boolean) => void
   onReady?: () => void
-  onSettled?: () => void
+  isFilterTransitioning?: boolean
 }
 
 export function GalleryScene({
@@ -27,7 +27,7 @@ export function GalleryScene({
   onItemSelect,
   onCardHoverChange,
   onReady,
-  onSettled,
+  isFilterTransitioning = false,
 }: GallerySceneProps) {
   useEffect(() => {
     if (mode !== 'all') return
@@ -36,7 +36,9 @@ export function GalleryScene({
 
   return (
     <Canvas
-      className="gallery-canvas"
+      className={`gallery-canvas${
+        isFilterTransitioning ? ' gallery-canvas--filter-transition' : ''
+      }`}
       camera={{ position: [0, 0.5, 11.5], fov: 42, near: 0.1, far: 100 }}
       gl={{ antialias: true, alpha: true }}
       style={{ background: 'transparent' }}
@@ -55,7 +57,6 @@ export function GalleryScene({
         onItemSelect={onItemSelect}
         onCardHoverChange={onCardHoverChange}
         onReady={onReady}
-        onSettled={onSettled}
       />
     </Canvas>
   )

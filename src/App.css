@@ -92,7 +92,18 @@
 }
 
 .gallery-loader--filter {
-  transition-duration: 0.25s;
+  background: rgba(10, 10, 16, 0.42);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.gallery-canvas--filter-transition {
+  transition: opacity 0.3s ease;
+  opacity: 0.88;
 }
 
 .gallery-loader__logo {

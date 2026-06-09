@@ -179,14 +179,15 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 
 ### I. Transition douce au changement de filtre
 
-- [ ] Éviter le reset brutal (`offsetRef = 0`, remontage immédiat)
-- [ ] Garder les anciennes cartes visibles 200–300 ms pendant le chargement
-- [ ] Ou fondu opacity loader → galerie
+- [x] Éviter le reset brutal (`offsetRef = 0`, remontage immédiat) — `useTransition` : l’ancienne galerie reste affichée pendant le chargement Suspense
+- [x] Garder les anciennes cartes visibles 200–300 ms pendant le chargement — toute la durée du chargement + loader filtre après 250 ms
+- [x] Fondu opacity loader → galerie — loader semi-transparent + canvas légèrement atténué (`opacity: 0.88`)
 - [ ] Tester la perception : le changement paraît fluide même si le chargement prend du temps
 
-**Fichiers concernés**
-- `src/gallery/CurvedWheelGallery.tsx` — `useEffect` sur `[mode, category]`
-- `src/App.tsx` — `GalleryLoader`, état de transition
+**Implémentation**
+- `src/App.tsx` — `useTransition` sur tous les changements filtre/mode ; loader après 250 ms si `isFilterPending`
+- `src/gallery/GalleryScene.tsx` — classe `gallery-canvas--filter-transition` pendant la transition
+- `src/App.css` — loader filtre avec fond translucide + blur
 
 ---
 
@@ -234,7 +235,7 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 6. [x] **B** — Préchargement GLB intelligent
 7. [ ] **G** — `dpr` + antialias conditionnel
 8. [ ] **H** — Cache modèle GLB préparé
-9. [ ] **I** — Transition douce filtre
+9. [x] **I** — Transition douce filtre
 10. [ ] **J** — Réactiver les modèles 3D
 11. [ ] **K** — Mesures finales
 
