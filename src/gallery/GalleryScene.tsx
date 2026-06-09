@@ -5,6 +5,7 @@ import { CurvedWheelGallery } from './CurvedWheelGallery'
 import { preloadCenterModelForCategory } from './preloadCenterModel'
 import { type GalleryCategory, type GalleryItem } from './images'
 import type { LayoutMode } from './layouts'
+import { useIsMobileGallery } from './mobilePerf'
 
 type GallerySceneProps = {
   mode: LayoutMode
@@ -29,6 +30,8 @@ export function GalleryScene({
   onReady,
   onSettled,
 }: GallerySceneProps) {
+  const isMobile = useIsMobileGallery()
+
   useEffect(() => {
     if (mode !== 'all') return
     preloadCenterModelForCategory(category)
@@ -38,12 +41,17 @@ export function GalleryScene({
     <Canvas
       className="gallery-canvas"
       camera={{ position: [0, 0.5, 11.5], fov: 42, near: 0.1, far: 100 }}
-      gl={{ antialias: true, alpha: true }}
+      gl={{
+        antialias: !isMobile,
+        alpha: true,
+        powerPreference: 'high-performance',
+      }}
       style={{ background: 'transparent' }}
-      dpr={[1, 2]}
+      dpr={isMobile ? 1 : [1, 2]}
+      frameloop="always"
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping
-        gl.toneMappingExposure = 1.65
+        gl.toneMappingExposure = isMobile ? 1.5 : 1.65
       }}
     >
       <CurvedWheelGallery

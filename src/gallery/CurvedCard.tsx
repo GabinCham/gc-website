@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { createCurvedPlaneGeometry, updateCurvedPlaneGeometry } from './createCurvedPlane'
@@ -18,13 +25,19 @@ import {
 import { playCardClickSound, playCardHoverSound } from './cardInteractionSound'
 import { getGalleryMediaType, getGalleryPosterUrl, type GalleryItem } from './images'
 import type { CardLayout } from './layouts'
+import { getGalleryScrollVelocity } from './galleryScrollSpeed'
+import { isMobileGallery } from './mobilePerf'
+import {
+  getInfiniteSpiralLayout,
+  isSpiralInteractiveSlot,
+  isSpiralVideoSlot,
+} from './spiralInfinite'
 
 const HOVER_SCALE = 1.7
-const HOVER_EMISSIVE = 0.0 /*/ TOdo : supprimer l'overlay donc /*/
+const HOVER_EMISSIVE = 0.0
 const CLICK_DRAG_PX = 10
-
-/** TEMP — dos des cartes off : voir la face avant depuis l'arrière (vérif lazy video). */
-const DEBUG_NO_CARD_BACK = false
+const DESKTOP_PLANE_SEGMENTS = 28
+const MOBILE_PLANE_SEGMENTS = 12
 
 /** Marge après la sortie de zone avant de repasser au poster. */
 const VIDEO_POSTER_HOLD_MS = 500
@@ -34,11 +47,15 @@ const videoPlayRefs = new Map<string, number>()
 
 type CurvedCardProps = {
   item: GalleryItem
-  layout: CardLayout
+  /** Fixe (mode simple) — ignoré si spiralSlot est défini. */
+  layout?: CardLayout
   width: number
   height: number
+  spiralSlot?: number
+  offsetRef?: RefObject<number>
+  frontSlotRef?: RefObject<number>
   isInteractive?: boolean
-  /** Lit la vidéo si true ; sinon poster seul (cartes hors viewport face). */
+  /** Lit la vidéo si true ; ignoré en mode spirale (calculé via offsetRef). */
   playVideo?: boolean
   onSelect?: (item: GalleryItem) => void
   onHoverChange?: (hovered: boolean) => void
@@ -46,12 +63,14 @@ type CurvedCardProps = {
 
 type CurvedCardMeshProps = {
   item: GalleryItem
-  layout: CardLayout
+  layout?: CardLayout
   width: number
   height: number
   texture: THREE.Texture
-  /** Texture du dos — par défaut la même que la face avant. */
   backTexture?: THREE.Texture
+  spiralSlot?: number
+  offsetRef?: RefObject<number>
+  frontSlotRef?: RefObject<number>
   isInteractive?: boolean
   onSelect?: (item: GalleryItem) => void
   onHoverChange?: (hovered: boolean) => void
@@ -69,6 +88,17 @@ function lerp3(
   ]
 }
 
+function resolveTargetLayout(
+  layout: CardLayout | undefined,
+  spiralSlot: number | undefined,
+  offsetRef: RefObject<number> | undefined,
+): CardLayout | undefined {
+  if (spiralSlot !== undefined && offsetRef) {
+    return getInfiniteSpiralLayout(spiralSlot, offsetRef.current)
+  }
+  return layout
+}
+
 function CurvedCardMesh({
   texture,
   backTexture: backTextureProp,
@@ -76,19 +106,29 @@ function CurvedCardMesh({
   width,
   height,
   item,
+  spiralSlot,
+  offsetRef,
+  frontSlotRef,
   isInteractive = false,
   onSelect,
   onHoverChange,
 }: CurvedCardMeshProps) {
+  const skipCardBack = isMobileGallery()
+  const planeSegments =
+    skipCardBack ? MOBILE_PLANE_SEGMENTS : DESKTOP_PLANE_SEGMENTS
+  const initialLayout =
+    resolveTargetLayout(layout, spiralSlot, offsetRef) ?? layout!
   const backTexture = backTextureProp ?? texture
   const initialTextureRef = useRef(texture)
   const { gl } = useThree()
   const groupRef = useRef<THREE.Group>(null)
   const meshRef = useRef<THREE.Mesh>(null)
-  const bendRef = useRef(layout.bendRadius)
-  const current = useRef<CardLayout>(layout)
+  const bendRef = useRef(initialLayout.bendRadius)
+  const current = useRef<CardLayout>(initialLayout)
   const hoverAmount = useRef(0)
   const pointerDown = useRef<{ x: number; y: number } | null>(null)
+  const interactiveRef = useRef(isInteractive)
+  const snapOnNextFrameRef = useRef(spiralSlot !== undefined)
   const [hovered, setHovered] = useState(false)
 
   texture.colorSpace = THREE.SRGBColorSpace
@@ -97,8 +137,14 @@ function CurvedCardMesh({
   configureTextureSampling(backTexture)
 
   const geometry = useMemo(
-    () => createCurvedPlaneGeometry(width, height, layout.bendRadius, 28),
-    [width, height],
+    () =>
+      createCurvedPlaneGeometry(
+        width,
+        height,
+        initialLayout.bendRadius,
+        planeSegments,
+      ),
+    [width, height, initialLayout.bendRadius, planeSegments],
   )
 
   const frontMaterial = useMemo(() => {
@@ -107,14 +153,15 @@ function CurvedCardMesh({
       width,
       height,
     )
-    if (DEBUG_NO_CARD_BACK) material.side = THREE.DoubleSide
+    if (skipCardBack) material.side = THREE.DoubleSide
     return material
-  }, [width, height])
+  }, [width, height, skipCardBack])
 
   useEffect(() => {
     frontMaterial.map = texture
     frontMaterial.needsUpdate = true
   }, [frontMaterial, texture])
+
   const backMaterial = useMemo(
     () => createRoundedCardBackMaterial(backTexture, width, height),
     [backTexture, width, height],
@@ -125,7 +172,7 @@ function CurvedCardMesh({
   }
 
   const handlePointerOver = (event: ThreeEvent<PointerEvent>) => {
-    if (!isInteractive) return
+    if (!interactiveRef.current) return
     event.stopPropagation()
     setHovered(true)
     onHoverChange?.(true)
@@ -134,7 +181,7 @@ function CurvedCardMesh({
   }
 
   const handlePointerOut = (event: ThreeEvent<PointerEvent>) => {
-    if (!isInteractive) return
+    if (!interactiveRef.current) return
     event.stopPropagation()
     setHovered(false)
     onHoverChange?.(false)
@@ -142,13 +189,13 @@ function CurvedCardMesh({
   }
 
   const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
-    if (!isInteractive) return
+    if (!interactiveRef.current) return
     event.stopPropagation()
     pointerDown.current = { x: event.clientX, y: event.clientY }
   }
 
   const handlePointerUp = (event: ThreeEvent<PointerEvent>) => {
-    if (!isInteractive || !pointerDown.current) return
+    if (!interactiveRef.current || !pointerDown.current) return
     event.stopPropagation()
 
     const { x, y } = pointerDown.current
@@ -163,7 +210,16 @@ function CurvedCardMesh({
   }
 
   useFrame((_, delta) => {
-    if (!DEBUG_NO_CARD_BACK) {
+    if (spiralSlot !== undefined && frontSlotRef) {
+      interactiveRef.current = isSpiralInteractiveSlot(
+        spiralSlot,
+        frontSlotRef.current,
+      )
+    } else {
+      interactiveRef.current = isInteractive
+    }
+
+    if (!skipCardBack) {
       const backUniforms = backMaterial.userData.cardBackUniforms as
         | CardBackUniforms
         | undefined
@@ -183,15 +239,16 @@ function CurvedCardMesh({
       frontMaterial.userData.mediaFitUniforms as MediaFitUniforms | undefined,
       texture,
     )
-    if (!DEBUG_NO_CARD_BACK) {
+    if (!skipCardBack) {
       syncFit(
         backMaterial.userData.mediaFitUniforms as MediaFitUniforms | undefined,
         backTexture,
       )
     }
 
-    const targetHover = isInteractive && hovered ? 1 : 0
-    hoverAmount.current += (targetHover - hoverAmount.current) * (1 - Math.exp(-14 * delta))
+    const targetHover = interactiveRef.current && hovered ? 1 : 0
+    hoverAmount.current +=
+      (targetHover - hoverAmount.current) * (1 - Math.exp(-14 * delta))
     frontMaterial.emissive.set('#ffffff')
     frontMaterial.emissiveIntensity = HOVER_EMISSIVE * hoverAmount.current
 
@@ -199,23 +256,36 @@ function CurvedCardMesh({
     const mesh = meshRef.current
     if (!group || !mesh) return
 
-    const blend = 1 - Math.exp(-6 * delta)
+    const targetLayout = resolveTargetLayout(layout, spiralSlot, offsetRef)
+    if (!targetLayout) return
+
     const c = current.current
 
-    c.position = lerp3(c.position, layout.position, blend)
-    c.rotation = lerp3(c.rotation, layout.rotation, blend)
-    c.scale += (layout.scale - c.scale) * blend
-    c.bendRadius += (layout.bendRadius - c.bendRadius) * blend
+    if (snapOnNextFrameRef.current) {
+      snapOnNextFrameRef.current = false
+      c.position = [...targetLayout.position]
+      c.rotation = [...targetLayout.rotation]
+      c.scale = targetLayout.scale
+      c.bendRadius = targetLayout.bendRadius
+      bendRef.current = targetLayout.bendRadius
+      updateCurvedPlaneGeometry(mesh.geometry, targetLayout.bendRadius)
+    } else {
+      const blend = 1 - Math.exp(-6 * delta)
+      c.position = lerp3(c.position, targetLayout.position, blend)
+      c.rotation = lerp3(c.rotation, targetLayout.rotation, blend)
+      c.scale += (targetLayout.scale - c.scale) * blend
+      c.bendRadius += (targetLayout.bendRadius - c.bendRadius) * blend
+
+      if (Math.abs(c.bendRadius - bendRef.current) > 0.015) {
+        bendRef.current = c.bendRadius
+        updateCurvedPlaneGeometry(mesh.geometry, c.bendRadius)
+      }
+    }
 
     const hoverScale = 1 + (HOVER_SCALE - 1) * hoverAmount.current
     group.position.set(...c.position)
     group.rotation.set(...c.rotation)
     group.scale.setScalar(c.scale * hoverScale)
-
-    if (Math.abs(c.bendRadius - bendRef.current) > 0.015) {
-      bendRef.current = c.bendRadius
-      updateCurvedPlaneGeometry(mesh.geometry, c.bendRadius)
-    }
   })
 
   return (
@@ -229,8 +299,7 @@ function CurvedCardMesh({
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
       />
-      {/* TEMP : image floutée / poster au dos — réactiver après vérif vidéos */}
-      {!DEBUG_NO_CARD_BACK ? (
+      {!skipCardBack ? (
         <mesh geometry={geometry} material={backMaterial} />
       ) : null}
     </group>
@@ -267,6 +336,56 @@ function useDelayedPlayVideo(playVideo: boolean, holdMs = VIDEO_POSTER_HOLD_MS) 
   return active
 }
 
+function computeSpiralPlayVideo(
+  spiralSlot: number,
+  offsetRef: RefObject<number>,
+  frontSlotRef: RefObject<number>,
+) {
+  const mobile = isMobileGallery()
+  if (mobile) {
+    return spiralSlot === frontSlotRef.current
+  }
+  return isSpiralVideoSlot(
+    spiralSlot,
+    frontSlotRef.current,
+    getGalleryScrollVelocity(),
+    offsetRef.current,
+  )
+}
+
+/** Met à jour playVideo uniquement quand la zone vidéo change (pas chaque frame). */
+function useSpiralPlayVideo(
+  spiralSlot: number | undefined,
+  offsetRef: RefObject<number> | undefined,
+  frontSlotRef: RefObject<number> | undefined,
+  fallback = false,
+) {
+  const desiredRef = useRef(fallback)
+  const [playVideo, setPlayVideo] = useState(fallback)
+
+  useFrame(() => {
+    if (
+      spiralSlot === undefined ||
+      !offsetRef ||
+      !frontSlotRef
+    ) {
+      return
+    }
+
+    const should = computeSpiralPlayVideo(spiralSlot, offsetRef, frontSlotRef)
+    if (should !== desiredRef.current) {
+      desiredRef.current = should
+      setPlayVideo(should)
+    }
+  })
+
+  return useDelayedPlayVideo(
+    spiralSlot !== undefined && offsetRef && frontSlotRef
+      ? playVideo
+      : fallback,
+  )
+}
+
 function useVideoPlayback(
   texture: THREE.VideoTexture | null,
   active: boolean,
@@ -289,7 +408,6 @@ function useVideoPlayback(
   }, [texture, active, url])
 }
 
-/** Charge la vidéo sans démonter le mesh parent (évite le saut de position). */
 function VideoTextureBridge({
   url,
   onTexture,
@@ -314,9 +432,22 @@ function CurvedVideoCardNoPoster(props: CurvedCardProps) {
 
 function CurvedVideoCardWithPoster({
   posterUrl,
+  spiralSlot,
+  offsetRef,
+  frontSlotRef,
+  playVideo: playVideoProp = false,
   ...props
 }: CurvedCardProps & { posterUrl: string }) {
-  const playVideo = useDelayedPlayVideo(props.playVideo ?? false)
+  const spiralPlayVideo = useSpiralPlayVideo(
+    spiralSlot,
+    offsetRef,
+    frontSlotRef,
+    playVideoProp,
+  )
+  const delayedPropPlayVideo = useDelayedPlayVideo(playVideoProp)
+  const isSpiralVideo =
+    spiralSlot !== undefined && offsetRef && frontSlotRef
+  const playVideo = isSpiralVideo ? spiralPlayVideo : delayedPropPlayVideo
   const posterTexture = useGalleryImageTexture(posterUrl)
   const [videoTexture, setVideoTexture] = useState<THREE.VideoTexture | null>(
     null,
@@ -338,6 +469,9 @@ function CurvedVideoCardWithPoster({
       <CurvedCardMesh
         texture={frontTexture}
         backTexture={posterTexture}
+        spiralSlot={spiralSlot}
+        offsetRef={offsetRef}
+        frontSlotRef={frontSlotRef}
         {...props}
       />
     </>

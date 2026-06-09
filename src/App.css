@@ -47,6 +47,15 @@
   animation: crt-flicker 0.15s infinite;
 }
 
+.app-background--mobile .crt-overlay {
+  animation: none;
+  opacity: 0.97;
+}
+
+.app-background--mobile .mesh-gradient__canvas {
+  filter: saturate(1.04);
+}
+
 @keyframes crt-flicker {
   0% { opacity: 0.96; }
   50% { opacity: 1; }

@@ -186,9 +186,14 @@ function createProgram(gl: WebGL2RenderingContext): WebGLProgram {
 
 type MeshGradientCanvasProps = {
   colors: GalleryBackgroundColors
+  /** Mobile : DPR bas, shader moins souvent recalculé. */
+  reduced?: boolean
 }
 
-export function MeshGradientCanvas({ colors }: MeshGradientCanvasProps) {
+export function MeshGradientCanvas({
+  colors,
+  reduced = false,
+}: MeshGradientCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const colorsRef = useRef(resolveColors(colors))
 
@@ -244,8 +249,11 @@ export function MeshGradientCanvas({ colors }: MeshGradientCanvasProps) {
     let visible = !document.hidden
     let reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+    const maxDpr = reduced ? 1 : 1.5
+    let frameSkip = 0
+
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
+      const dpr = Math.min(window.devicePixelRatio || 1, maxDpr)
       width = Math.max(1, Math.floor(canvas.clientWidth * dpr))
       height = Math.max(1, Math.floor(canvas.clientHeight * dpr))
 
@@ -260,6 +268,11 @@ export function MeshGradientCanvas({ colors }: MeshGradientCanvasProps) {
     const render = (now: number) => {
       frameId = requestAnimationFrame(render)
       if (!visible) return
+
+      if (reduced) {
+        frameSkip += 1
+        if (frameSkip % 2 !== 0) return
+      }
 
       const { accent, glow, base, deep } = colorsRef.current
       const elapsed = reducedMotion ? 0 : (now - start) * 0.001
@@ -299,7 +312,7 @@ export function MeshGradientCanvas({ colors }: MeshGradientCanvasProps) {
       gl.deleteBuffer(buffer)
       gl.deleteProgram(program)
     }
-  }, [])
+  }, [reduced])
 
   return (
     <canvas

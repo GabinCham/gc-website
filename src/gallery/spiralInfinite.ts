@@ -60,12 +60,37 @@ export function getImageIndexForSlot(slot: number, total: number) {
   return ((slot % total) + total) % total
 }
 
-export function getVisibleSlots(offset: number, total: number) {
-  const center = Math.floor(offset)
-  const buffer = Math.max(10, Math.ceil(total * 0.55))
+export function getVisibleSlotsBuffer(total: number, mobile = false) {
+  if (mobile) return Math.max(5, Math.ceil(total * 0.35))
+  return Math.max(10, Math.ceil(total * 0.55))
+}
+
+/**
+ * Slots montés en avance au-dessus du offset (haut de l’hélice).
+ * Évite qu’une carte n’apparaisse d’un coup quand offset franchit un entier.
+ */
+export const VISIBLE_SLOTS_AHEAD_EXTRA = 3
+
+export function getVisibleSlotRange(
+  offset: number,
+  total: number,
+  mobile = false,
+) {
+  const buffer = getVisibleSlotsBuffer(total, mobile)
+  const minSlot = Math.floor(offset - buffer)
+  const maxSlot = Math.ceil(offset + buffer + VISIBLE_SLOTS_AHEAD_EXTRA)
+  return { minSlot, maxSlot }
+}
+
+export function getVisibleSlots(
+  offset: number,
+  total: number,
+  mobile = false,
+) {
+  const { minSlot, maxSlot } = getVisibleSlotRange(offset, total, mobile)
   const slots: number[] = []
 
-  for (let slot = center - buffer; slot <= center + buffer; slot++) {
+  for (let slot = minSlot; slot <= maxSlot; slot++) {
     slots.push(slot)
   }
 

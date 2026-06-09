@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GalleryBackgroundColors } from '../gallery/images'
+import { useIsMobileGallery } from '../gallery/mobilePerf'
 import { MeshGradientCanvas } from './MeshGradientCanvas'
 
 const FADE_MS = 2200
@@ -56,6 +57,7 @@ type AppBackgroundProps = {
 }
 
 export function AppBackground({ colors, cardHovered = false }: AppBackgroundProps) {
+  const isMobile = useIsMobileGallery()
   const [from, setFrom] = useState(colors)
   const [to, setTo] = useState(colors)
   const [mix, setMix] = useState(1)
@@ -94,17 +96,18 @@ export function AppBackground({ colors, cardHovered = false }: AppBackgroundProp
     [from, to, mix],
   )
 
+  const backgroundClass = [
+    'app-background',
+    cardHovered ? 'app-background--card-hover' : '',
+    isMobile ? 'app-background--mobile' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <div
-      className={
-        cardHovered
-          ? 'app-background app-background--card-hover'
-          : 'app-background'
-      }
-      aria-hidden
-    >
+    <div className={backgroundClass} aria-hidden>
       <div className="mesh-gradient">
-        <MeshGradientCanvas colors={displayColors} />
+        <MeshGradientCanvas colors={displayColors} reduced={isMobile} />
       </div>
       <div className="crt-overlay" />
     </div>
