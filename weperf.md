@@ -32,7 +32,7 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 - [x] Ré-encoder les textures en WebP ou KTX2 si possible
 - [x] Objectif par fichier : **< 2 Mo** (idéal : 500 Ko – 1 Mo)
 - [x] Remplacer les fichiers dans `public/` et vérifier le rendu visuel
-- [ ] Tester le temps de chargement avant/après (Network tab) — à valider dans le navigateur
+- [ ] Tester le temps de chargement avant/après (Network tab) — mesures **avant** notées ↓, refaire test **après** en local
 
 | Fichier | Taille actuelle | Taille cible | Taille obtenue |
 |---|---|---|---|
@@ -41,6 +41,38 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 | `K7.glb` | 9,4 Mo | < 2 Mo | **259 Ko** (−97,3 %) |
 
 **Total GLB** : 97 Mo → **1,1 Mo**
+
+#### Mesures Network tab (9 juin 2026)
+
+**AVANT compression** — No throttling, Disable cache ✓, filtre `glb` :
+
+| Fichier | Size (Network) | Time |
+|---|---|---|
+| `K7.glb` | 9 858 Ko (~9,6 Mo) | 247 ms |
+| `90s_computer.glb` | 37 935 Ko (~37 Mo) | 877 ms |
+| `handycam.glb` | 52 554 Ko (~51 Mo) | 1,00 s |
+| **Total** | **~100 Mo** | **~2,1 s** |
+
+**AVANT compression** — 3G throttling, `K7.glb` seul : **45,43 s** (6 723 Ko affiché)
+
+**APRÈS compression** — à remplir (voir procédure ci-dessous) :
+
+| Fichier | Size attendu | Time |
+|---|---|---|
+| `K7.glb` | ~259 Ko | ? |
+| `90s_computer.glb` | ~174 Ko | ? |
+| `handycam.glb` | ~667 Ko | ? |
+| **Total** | **~1,1 Mo** | **< 500 ms** (No throttling) |
+
+> ⚠️ Si tu vois encore ~10 / 37 / 51 Mo dans Network, tu testes l’**ancienne version** (site déployé ou preview pas rebuild). Voir procédure « Après ».
+
+**Procédure test APRÈS (local)**
+1. `npm run build && npm run preview`
+2. Ouvre **`http://localhost:4173`** (pas le site en prod tant qu’il n’est pas redéployé)
+3. Network → filtre `glb` → Disable cache ✓ → hard reload (`Cmd+Shift+R`)
+4. Vérifie que **Size** affiche ~259 Ko / ~174 Ko / ~667 Ko (pas des Mo)
+5. Refais un test en **3G** sur `K7.glb` seul → attendu **< 2 s** au lieu de 45 s
+6. Coche cette case quand les tailles ET temps « après » sont confirmés
 
 **Fichiers ajoutés / modifiés**
 - `scripts/compress-glb.mjs` — script reproductible (`npm run compress:glb`)
@@ -184,7 +216,9 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 
 | Métrique | Avant | Après |
 |---|---|---|
-| Taille totale GLB | ~97 Mo | |
+| Taille totale GLB | ~100 Mo (Network) | ~1,1 Mo (fichiers compressés) |
+| K7.glb en 3G | 45,43 s | |
+| GLB tous filtres (No throttling) | ~2,1 s | |
 | Cartes visibles (slots) | ~21 | |
 | Vidéos en lecture simultanée | ~6 | |
 | Temps démarrage (4G) | | |

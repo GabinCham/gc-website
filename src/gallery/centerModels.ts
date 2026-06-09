@@ -1,10 +1,10 @@
 import type { GalleryCategory } from './images'
 
-export const CENTER_MODEL_DEFAULT = '/glb/glb-compress/K7.glb'
+export const CENTER_MODEL_DEFAULT = 'glb/K7.glb'
 
 const CENTER_MODEL_BY_CATEGORY: Partial<Record<GalleryCategory, string>> = {
-  coding: '/glb/glb-compress/90s_computer.glb',
-  films: '/glb/glb-compress/handycam.glb',
+  coding: '/glb/90s_computer.glb',
+  films: '/glb/handycam.glb',
 }
 
 export function getCenterModelUrl(category: GalleryCategory | null): string {
