@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { GalleryGLTFLoader } from './galleryGltfLoader'
 import * as THREE from 'three'
 import { getSpiralCenterTransform } from './spiralInfinite'
 import { CENTER_MODEL_DEFAULT, CENTER_MODEL_URLS } from './centerModels'
@@ -56,7 +56,7 @@ export function VhsTapeCenter({
   offsetRef,
   modelUrl = CENTER_MODEL_DEFAULT,
 }: VhsTapeCenterProps) {
-  const { scene } = useLoader(GLTFLoader, modelUrl)
+  const { scene } = useLoader(GalleryGLTFLoader, modelUrl)
   const groupRef = useRef<THREE.Group>(null)
   const innerRef = useRef<THREE.Group>(null)
   const spiralCurrent = useRef({
@@ -112,6 +112,6 @@ export function VhsTapeCenter({
 
 export function preloadVhsTape() {
   for (const url of CENTER_MODEL_URLS) {
-    useLoader.preload(GLTFLoader, url)
+    useLoader.preload(GalleryGLTFLoader, url)
   }
 }

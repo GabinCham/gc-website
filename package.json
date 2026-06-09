@@ -6,13 +6,13 @@
   "scripts": {
     "dev": "vite",
     "generate:audio": "node scripts/generate-audio-assets.mjs",
+    "compress:glb": "node scripts/compress-glb.mjs",
     "prebuild": "node scripts/generate-audio-assets.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "git push origin main"
-
   },
   "dependencies": {
     "@react-three/fiber": "^9.6.1",
@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@gltf-transform/cli": "^4.4.0",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
