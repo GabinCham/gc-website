@@ -124,6 +124,7 @@ export function getGalleryPosterUrl(
   const filename = path.replace(/^.*\//, '')
   const base = filename
     .replace(/_reduce\.(mp4|webm)$/i, '')
+    .replace(/_compress\.(mp4|webm)$/i, '')
     .replace(/\.(mp4|webm)$/i, '')
   if (!base) return null
 

@@ -110,3 +110,30 @@ export function isSpiralInteractiveSlot(slot: number, frontSlot: number) {
   return Math.abs(slot - frontSlot) <= 1
 }
 
+/** Entrée vidéo côté gauche (m) — plus haut = démarrage plus tôt. */
+export const VIDEO_LEFT_X = 5.05
+
+/** Sortie vidéo côté droit (m) — plus haut = poster plus tard. */
+export const VIDEO_RELEASE_X = 4.95
+
+/**
+ * Zone vidéo basée sur la position X réelle de la carte (pas le slot),
+ * pour éviter les trous quand frontSlot et offset se désynchronisent.
+ */
+export function isSpiralVideoSlot(
+  slot: number,
+  _frontSlot: number,
+  scrollVelocity: number,
+  offset: number,
+  leftX = VIDEO_LEFT_X,
+  releaseX = VIDEO_RELEASE_X,
+) {
+  const x = getInfiniteSpiralLayout(slot, offset).position[0]
+
+  if (scrollVelocity < -0.00002) {
+    return x < leftX && x > -releaseX
+  }
+
+  return x > -leftX && x < releaseX
+}
+

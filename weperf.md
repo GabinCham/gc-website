@@ -93,17 +93,20 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 
 ### C. Corriger le signal « gallery ready »
 
-- [ ] Remplacer `GalleryReadyNotifier` (1ʳᵉ frame ≠ assets chargés)
-- [ ] Option A : ajouter `@react-three/drei` et utiliser `useProgress`
-- [ ] Option B : compteur custom (textures + GLB chargés → `onReady`)
-- [ ] Garder `GalleryLoader` visible tant que les assets critiques ne sont pas prêts
-- [ ] Définir ce qui est « critique » : carte frontale + poster/texture + GLB centre
+- [x] Remplacer `GalleryReadyNotifier` (1ʳᵉ frame ≠ assets chargés)
+- [ ] ~~Option A : `@react-three/drei` + `useProgress`~~ — non retenu
+- [x] Option B : `GalleryAssetsReady` dans le boundary Suspense des assets critiques
+- [x] Garder `GalleryLoader` visible tant que les assets critiques ne sont pas prêts
+- [x] Assets critiques : **GLB centre** + **toutes les cartes visibles** (un seul Suspense → affichage simultané, pas de pop-in)
 - [ ] Tester : le loader ne disparaît plus avant l'affichage réel
+- [x] Loader entre les changements de filtre (si chargement > 200 ms, variante `filter`)
 
-**Fichiers concernés**
-- `src/gallery/GalleryScene.tsx` — `GalleryReadyNotifier`
-- `src/components/GalleryLoader.tsx`
-- `src/App.tsx` — `galleryReady` / `handleGalleryReady`
+**Implémentation**
+- `src/gallery/GalleryAssetsReady.tsx` — `onReady` après résolution Suspense + 2× `requestAnimationFrame` (1er paint)
+- `src/gallery/CurvedWheelGallery.tsx` — un Suspense : modèle + toutes les cartes visibles avant `onReady`
+- `src/gallery/GalleryScene.tsx` — suppression de `GalleryReadyNotifier`
+- `src/App.tsx` — `filterLoading` + délai 200 ms avant affichage (`filterLoaderVisible`)
+- `src/components/GalleryLoader.tsx` — variante `filter` (transition plus courte)
 
 ---
 
@@ -224,7 +227,7 @@ Checklist pour améliorer les temps de chargement au démarrage et lors des chan
 ## Ordre d'implémentation recommandé
 
 1. [ ] **D** — Lazy video (quick win carousel, infra déjà en place)
-2. [ ] **C** — Fix `onReady` / loader (meilleure perception immédiate)
+2. [x] **C** — Fix `onReady` / loader (meilleure perception immédiate)
 3. [ ] **E** — Réduire buffer slots (5 min)
 4. [ ] **F** — Préchargement au survol filtre
 5. [x] **A** — Compression GLB (plus long, plus gros gain 3D)

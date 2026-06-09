@@ -15,9 +15,12 @@ import {
   getStableFrontSlot,
   getVisibleSlots,
   isSpiralInteractiveSlot,
+  isSpiralVideoSlot,
 } from './spiralInfinite'
+import { getGalleryScrollVelocity } from './galleryScrollSpeed'
 import { CARD_SIZE, getCardLayout, type LayoutMode } from './layouts'
 import { useGalleryScroll } from './useGalleryScroll'
+import { GalleryAssetsReady } from './GalleryAssetsReady'
 import { getCenterModelUrl } from './centerModels'
 import { VhsTapeCenter } from './VhsTapeCenter'
 
@@ -31,6 +34,8 @@ type CurvedWheelGalleryProps = {
   onBackgroundItemChange?: (item: GalleryItem) => void
   onItemSelect?: (item: GalleryItem) => void
   onCardHoverChange?: (hovered: boolean) => void
+  onReady?: () => void
+  onSettled?: () => void
 }
 
 export function CurvedWheelGallery({
@@ -41,6 +46,8 @@ export function CurvedWheelGallery({
   onBackgroundItemChange,
   onItemSelect,
   onCardHoverChange,
+  onReady,
+  onSettled,
 }: CurvedWheelGalleryProps) {
   const items = useMemo(
     () => filterGalleryByCategory(GALLERY_ITEMS, category),
@@ -173,13 +180,13 @@ export function CurvedWheelGallery({
 
       <Suspense fallback={null}>
         <group position={[0, GALLERY_GROUP_Y, 0]}>
-          {isAll && (
+          {isAll ? (
             <VhsTapeCenter
               key={centerModelUrl}
               offsetRef={offsetRef}
               modelUrl={centerModelUrl}
             />
-          )}
+          ) : null}
           {visibleItems.map(({ slot, layout, item }) => (
             <CurvedCard
               key={isAll ? `slot-${slot}-${item.id}` : item.id}
@@ -190,11 +197,22 @@ export function CurvedWheelGallery({
               isInteractive={
                 isAll ? isSpiralInteractiveSlot(slot, frontSlot) : true
               }
+              playVideo={
+                isAll
+                  ? isSpiralVideoSlot(
+                      slot,
+                      frontSlot,
+                      getGalleryScrollVelocity(),
+                      offset,
+                    )
+                  : true
+              }
               onSelect={onItemSelect}
               onHoverChange={handleCardHoverChange}
             />
           ))}
         </group>
+        <GalleryAssetsReady onReady={onReady} onSettled={onSettled} />
       </Suspense>
     </>
   )

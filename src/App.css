@@ -91,6 +91,10 @@
   visibility: hidden;
 }
 
+.gallery-loader--filter {
+  transition-duration: 0.25s;
+}
+
 .gallery-loader__logo {
   width: 2.5rem;
   height: 2.5rem;

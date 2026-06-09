@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { createCurvedPlaneGeometry, updateCurvedPlaneGeometry } from './createCurvedPlane'
@@ -23,12 +23,23 @@ const HOVER_SCALE = 1.7
 const HOVER_EMISSIVE = 0.0 /*/ TOdo : supprimer l'overlay donc /*/
 const CLICK_DRAG_PX = 10
 
+/** TEMP — dos des cartes off : voir la face avant depuis l'arrière (vérif lazy video). */
+const DEBUG_NO_CARD_BACK = false
+
+/** Marge après la sortie de zone avant de repasser au poster. */
+const VIDEO_POSTER_HOLD_MS = 500
+
+/** useLoader partage une VideoTexture par URL — ref count pour ne pas pause() les autres cartes. */
+const videoPlayRefs = new Map<string, number>()
+
 type CurvedCardProps = {
   item: GalleryItem
   layout: CardLayout
   width: number
   height: number
   isInteractive?: boolean
+  /** Lit la vidéo si true ; sinon poster seul (cartes hors viewport face). */
+  playVideo?: boolean
   onSelect?: (item: GalleryItem) => void
   onHoverChange?: (hovered: boolean) => void
 }
@@ -70,6 +81,7 @@ function CurvedCardMesh({
   onHoverChange,
 }: CurvedCardMeshProps) {
   const backTexture = backTextureProp ?? texture
+  const initialTextureRef = useRef(texture)
   const { gl } = useThree()
   const groupRef = useRef<THREE.Group>(null)
   const meshRef = useRef<THREE.Mesh>(null)
@@ -89,10 +101,20 @@ function CurvedCardMesh({
     [width, height],
   )
 
-  const frontMaterial = useMemo(
-    () => createRoundedCardFrontMaterial(texture, width, height),
-    [texture, width, height],
-  )
+  const frontMaterial = useMemo(() => {
+    const material = createRoundedCardFrontMaterial(
+      initialTextureRef.current,
+      width,
+      height,
+    )
+    if (DEBUG_NO_CARD_BACK) material.side = THREE.DoubleSide
+    return material
+  }, [width, height])
+
+  useEffect(() => {
+    frontMaterial.map = texture
+    frontMaterial.needsUpdate = true
+  }, [frontMaterial, texture])
   const backMaterial = useMemo(
     () => createRoundedCardBackMaterial(backTexture, width, height),
     [backTexture, width, height],
@@ -141,10 +163,12 @@ function CurvedCardMesh({
   }
 
   useFrame((_, delta) => {
-    const backUniforms = backMaterial.userData.cardBackUniforms as
-      | CardBackUniforms
-      | undefined
-    if (backUniforms) syncCardBackUniforms(backUniforms)
+    if (!DEBUG_NO_CARD_BACK) {
+      const backUniforms = backMaterial.userData.cardBackUniforms as
+        | CardBackUniforms
+        | undefined
+      if (backUniforms) syncCardBackUniforms(backUniforms)
+    }
 
     const syncFit = (
       uniforms: MediaFitUniforms | undefined,
@@ -159,10 +183,12 @@ function CurvedCardMesh({
       frontMaterial.userData.mediaFitUniforms as MediaFitUniforms | undefined,
       texture,
     )
-    syncFit(
-      backMaterial.userData.mediaFitUniforms as MediaFitUniforms | undefined,
-      backTexture,
-    )
+    if (!DEBUG_NO_CARD_BACK) {
+      syncFit(
+        backMaterial.userData.mediaFitUniforms as MediaFitUniforms | undefined,
+        backTexture,
+      )
+    }
 
     const targetHover = isInteractive && hovered ? 1 : 0
     hoverAmount.current += (targetHover - hoverAmount.current) * (1 - Math.exp(-14 * delta))
@@ -203,7 +229,10 @@ function CurvedCardMesh({
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
       />
-      <mesh geometry={geometry} material={backMaterial} />
+      {/* TEMP : image floutée / poster au dos — réactiver après vérif vidéos */}
+      {!DEBUG_NO_CARD_BACK ? (
+        <mesh geometry={geometry} material={backMaterial} />
+      ) : null}
     </group>
   )
 }
@@ -213,32 +242,112 @@ function CurvedImageCard(props: CurvedCardProps) {
   return <CurvedCardMesh texture={texture} {...props} />
 }
 
+function useDelayedPlayVideo(playVideo: boolean, holdMs = VIDEO_POSTER_HOLD_MS) {
+  const [active, setActive] = useState(playVideo)
+  const offTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (playVideo) {
+      if (offTimer.current) clearTimeout(offTimer.current)
+      offTimer.current = null
+      setActive(true)
+      return
+    }
+
+    offTimer.current = setTimeout(() => {
+      setActive(false)
+      offTimer.current = null
+    }, holdMs)
+
+    return () => {
+      if (offTimer.current) clearTimeout(offTimer.current)
+    }
+  }, [playVideo, holdMs])
+
+  return active
+}
+
+function useVideoPlayback(
+  texture: THREE.VideoTexture | null,
+  active: boolean,
+  url: string,
+) {
+  useEffect(() => {
+    if (!texture || !active) return
+    const video = texture.image as HTMLVideoElement
+    videoPlayRefs.set(url, (videoPlayRefs.get(url) ?? 0) + 1)
+    video.play().catch(() => {})
+    return () => {
+      const next = Math.max(0, (videoPlayRefs.get(url) ?? 1) - 1)
+      if (next === 0) {
+        video.pause()
+        videoPlayRefs.delete(url)
+      } else {
+        videoPlayRefs.set(url, next)
+      }
+    }
+  }, [texture, active, url])
+}
+
+/** Charge la vidéo sans démonter le mesh parent (évite le saut de position). */
+function VideoTextureBridge({
+  url,
+  onTexture,
+}: {
+  url: string
+  onTexture: (texture: THREE.VideoTexture) => void
+}) {
+  const texture = useGalleryVideoTexture(url)
+
+  useEffect(() => {
+    onTexture(texture)
+  }, [texture, onTexture])
+
+  return null
+}
+
+function CurvedVideoCardNoPoster(props: CurvedCardProps) {
+  const texture = useGalleryVideoTexture(props.item.url)
+  useVideoPlayback(texture, true, props.item.url)
+  return <CurvedCardMesh texture={texture} {...props} />
+}
+
 function CurvedVideoCardWithPoster({
   posterUrl,
   ...props
 }: CurvedCardProps & { posterUrl: string }) {
-  const videoTexture = useGalleryVideoTexture(props.item.url)
+  const playVideo = useDelayedPlayVideo(props.playVideo ?? false)
   const posterTexture = useGalleryImageTexture(posterUrl)
+  const [videoTexture, setVideoTexture] = useState<THREE.VideoTexture | null>(
+    null,
+  )
+  const frontTexture =
+    playVideo && videoTexture ? videoTexture : posterTexture
+
+  useVideoPlayback(videoTexture, playVideo, props.item.url)
+
+  const handleVideoTexture = useCallback((texture: THREE.VideoTexture) => {
+    setVideoTexture(texture)
+  }, [])
 
   return (
-    <CurvedCardMesh
-      texture={videoTexture}
-      backTexture={posterTexture}
-      {...props}
-    />
+    <>
+      {playVideo ? (
+        <VideoTextureBridge url={props.item.url} onTexture={handleVideoTexture} />
+      ) : null}
+      <CurvedCardMesh
+        texture={frontTexture}
+        backTexture={posterTexture}
+        {...props}
+      />
+    </>
   )
 }
 
 function CurvedVideoCard(props: CurvedCardProps) {
   const posterUrl = getGalleryPosterUrl(props.item)
-
-  if (posterUrl) {
-    return <CurvedVideoCardWithPoster posterUrl={posterUrl} {...props} />
-  }
-
-  const texture = useGalleryVideoTexture(props.item.url)
-
-  return <CurvedCardMesh texture={texture} {...props} />
+  if (!posterUrl) return <CurvedVideoCardNoPoster {...props} />
+  return <CurvedVideoCardWithPoster posterUrl={posterUrl} {...props} />
 }
 
 export function CurvedCard(props: CurvedCardProps) {

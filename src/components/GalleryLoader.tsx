@@ -2,12 +2,19 @@ const LOADER_IMAGE = '/ux_blanc.svg'
 
 type GalleryLoaderProps = {
   hidden?: boolean
+  /** `filter` = transition entre filtres (plus léger). */
+  variant?: 'initial' | 'filter'
 }
 
-export function GalleryLoader({ hidden = false }: GalleryLoaderProps) {
+export function GalleryLoader({
+  hidden = false,
+  variant = 'initial',
+}: GalleryLoaderProps) {
   return (
     <div
-      className={`gallery-loader${hidden ? ' gallery-loader--hidden' : ''}`}
+      className={`gallery-loader gallery-loader--${variant}${
+        hidden ? ' gallery-loader--hidden' : ''
+      }`}
       role="status"
       aria-live="polite"
       aria-hidden={hidden}

@@ -19,7 +19,6 @@ class GalleryVideoTextureLoader extends THREE.Loader {
       const texture = new THREE.VideoTexture(video)
       texture.colorSpace = THREE.SRGBColorSpace
       onLoad(texture)
-      video.play().catch(() => {})
     }
 
     video.addEventListener('loadeddata', finish, { once: true })

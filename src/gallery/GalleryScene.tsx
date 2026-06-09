@@ -1,5 +1,5 @@
-import { Canvas, useFrame } from '@react-three/fiber'
-import { useEffect, useRef } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { useEffect } from 'react'
 import * as THREE from 'three'
 import { CurvedWheelGallery } from './CurvedWheelGallery'
 import { preloadCenterModelForCategory } from './preloadCenterModel'
@@ -15,18 +15,7 @@ type GallerySceneProps = {
   onItemSelect?: (item: GalleryItem) => void
   onCardHoverChange?: (hovered: boolean) => void
   onReady?: () => void
-}
-
-function GalleryReadyNotifier({ onReady }: { onReady?: () => void }) {
-  const done = useRef(false)
-
-  useFrame(() => {
-    if (done.current || !onReady) return
-    done.current = true
-    onReady()
-  })
-
-  return null
+  onSettled?: () => void
 }
 
 export function GalleryScene({
@@ -38,6 +27,7 @@ export function GalleryScene({
   onItemSelect,
   onCardHoverChange,
   onReady,
+  onSettled,
 }: GallerySceneProps) {
   useEffect(() => {
     if (mode !== 'all') return
@@ -56,7 +46,6 @@ export function GalleryScene({
         gl.toneMappingExposure = 1.65
       }}
     >
-      <GalleryReadyNotifier onReady={onReady} />
       <CurvedWheelGallery
         mode={mode}
         category={category}
@@ -65,6 +54,8 @@ export function GalleryScene({
         onBackgroundItemChange={onBackgroundItemChange}
         onItemSelect={onItemSelect}
         onCardHoverChange={onCardHoverChange}
+        onReady={onReady}
+        onSettled={onSettled}
       />
     </Canvas>
   )

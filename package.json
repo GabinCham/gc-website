@@ -7,6 +7,8 @@
     "dev": "vite",
     "generate:audio": "node scripts/generate-audio-assets.mjs",
     "compress:glb": "node scripts/compress-glb.mjs",
+    "compress:video": "node scripts/compress-video.mjs",
+    "generate:poster": "node scripts/generate-poster.mjs",
     "prebuild": "node scripts/generate-audio-assets.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

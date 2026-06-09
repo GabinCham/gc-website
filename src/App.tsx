@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SITE_TRACK } from './audio'
 import { AppBackground } from './components/AppBackground'
 import { AudioPlayer } from './components/AudioPlayer'
@@ -29,6 +29,9 @@ const INITIAL_ITEM = FAVORITE_ITEMS[0] ?? GALLERY_ITEMS[0]!
 function App() {
   const mountGallery = useIdleMount()
   const [galleryReady, setGalleryReady] = useState(false)
+  const [filterLoading, setFilterLoading] = useState(false)
+  const [filterLoaderVisible, setFilterLoaderVisible] = useState(false)
+  const skipFilterLoader = useRef(true)
   const [mode, setMode] = useState<LayoutMode>('all')
   const [category, setCategory] = useState<GalleryCategory | null>(DEFAULT_CATEGORY)
 
@@ -75,7 +78,30 @@ function App() {
 
   const handleGalleryReady = useCallback(() => {
     setGalleryReady(true)
+    setFilterLoading(false)
   }, [])
+
+  const handleGallerySettled = useCallback(() => {
+    setFilterLoading(false)
+  }, [])
+
+  useEffect(() => {
+    if (!galleryReady) return
+    if (skipFilterLoader.current) {
+      skipFilterLoader.current = false
+      return
+    }
+    setFilterLoading(true)
+  }, [galleryCategory, mode, galleryReady])
+
+  useEffect(() => {
+    if (!filterLoading || !galleryReady) {
+      setFilterLoaderVisible(false)
+      return
+    }
+    const id = window.setTimeout(() => setFilterLoaderVisible(true), 200)
+    return () => clearTimeout(id)
+  }, [filterLoading, galleryReady])
 
   const preloadFilterModel = useCallback((filterCategory: GalleryCategory | null) => {
     void import('./gallery/preloadCenterModel').then(({ preloadCenterModelForCategory }) => {
@@ -91,7 +117,10 @@ function App() {
   return (
     <div className="app">
       <AppBackground colors={backgroundColors} cardHovered={cardHovered} />
-      <GalleryLoader hidden={galleryReady} />
+      <GalleryLoader
+        hidden={galleryReady && !filterLoaderVisible}
+        variant={galleryReady ? 'filter' : 'initial'}
+      />
       {mountGallery ? (
         <Suspense fallback={null}>
           <GalleryScene
@@ -103,6 +132,7 @@ function App() {
             onItemSelect={handleItemSelect}
             onCardHoverChange={setCardHovered}
             onReady={handleGalleryReady}
+            onSettled={handleGallerySettled}
           />
         </Suspense>
       ) : null}
