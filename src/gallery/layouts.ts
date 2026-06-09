@@ -13,7 +13,7 @@ export type CardLayout = {
  * plus espacées (moins visibles en même temps), valeur plus basse = l'inverse.
  * Indépendant du nombre total de projets dans la galerie.
  */
-export const MAX_VISIBLE_CARDS = 22
+export const MAX_VISIBLE_CARDS = 23
 
 /**
  * Largeur viewport (px) en dessous de laquelle la spirale garde l'échelle desktop

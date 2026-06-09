@@ -13,22 +13,48 @@
   background: #000;
 }
 
-.mesh-gradient {
+.app-background__media-stack {
   position: absolute;
   inset: 0;
   overflow: hidden;
 }
 
-.mesh-gradient__canvas {
+.app-background__layer {
+  position: absolute;
+  inset: -18%;
+  will-change: opacity;
+}
+
+.app-background__media {
   display: block;
   width: 100%;
   height: 100%;
-  filter: saturate(1.08);
+  object-fit: cover;
+  filter: blur(88px) saturate(1.4) brightness(0.58);
+  transform: scale(1.08);
   transition: filter 0.55s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.app-background--card-hover .mesh-gradient__canvas {
-  filter: saturate(1.05) blur(80px);
+.app-background--card-hover .app-background__media {
+  filter: blur(96px) saturate(1.55) brightness(0.52);
+}
+
+.app-background__ambient-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 85% 75% at 50% 45%,
+      rgba(0, 0, 0, 0.15) 0%,
+      rgba(0, 0, 0, 0.72) 100%
+    ),
+    radial-gradient(
+      ellipse 130% 90% at 50% 110%,
+      rgba(0, 0, 0, 0.45) 0%,
+      transparent 55%
+    );
 }
 
 .crt-overlay {
