@@ -15,6 +15,7 @@ const MODELS = [
   { source: 'handycam.glb', output: 'public/glb/handycam.glb' },
   { source: '90s_computer.glb', output: 'public/glb/90s_computer.glb' },
   { source: 'K7.glb', output: 'public/glb/K7.glb' },
+  { source: 'orange_soda.glb', output: 'public/glb/orange_soda.glb' },
 ]
 
 const TEXTURE_SIZE = 1024

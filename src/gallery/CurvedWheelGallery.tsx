@@ -32,6 +32,7 @@ import { useIsMobileGallery } from './mobilePerf'
 import {
   CONVERGE_DURATION,
   MOVE_DURATION,
+  MOVE_START_CONVERGE,
   computeProjectHeroLayout,
   createProjectTransitionState,
   type HeroLockState,
@@ -483,31 +484,41 @@ export function CurvedWheelGallery({
   useFrame((_, delta) => {
     const transition = transitionRef.current
 
-    if (transition?.active) {
-      if (transition.phase === 'converge') {
-        transition.convergeT += delta / CONVERGE_DURATION
-        if (transition.convergeT >= 1) {
-          transition.convergeT = 1
+    if (transition?.active && transition.phase !== 'done') {
+      if (transition.convergeT < 1) {
+        transition.convergeT = Math.min(
+          1,
+          transition.convergeT + delta / CONVERGE_DURATION,
+        )
+      }
+
+      if (transition.convergeT >= MOVE_START_CONVERGE) {
+        if (transition.phase === 'converge') {
           transition.phase = 'move'
           transition.heroLayout = resolveHeroLayout()
         }
-      } else if (transition.phase === 'move') {
         transition.heroLayout = resolveHeroLayout()
-        transition.moveT += delta / MOVE_DURATION
-        if (transition.moveT >= 1) {
-          transition.moveT = 1
-          transition.phase = 'done'
-          const finalLayout = transition.heroLayout ?? resolveHeroLayout()
-          transition.heroLayout = finalLayout
-          lockedHeroSideRef.current = transition.heroSide
-          restoredSlotRef.current = lockedSlotRef.current
-          heroLockRef.current = {
-            itemId: transition.itemId,
-            layout: finalLayout,
-            heroSide: transition.heroSide,
-          }
-          onTransitionCompleteRef.current?.({ heroSide: transition.heroSide })
+        if (transition.moveT < 1) {
+          transition.moveT = Math.min(
+            1,
+            transition.moveT + delta / MOVE_DURATION,
+          )
         }
+      }
+
+      if (transition.convergeT >= 1 && transition.moveT >= 1) {
+        transition.moveT = 1
+        transition.phase = 'done'
+        const finalLayout = transition.heroLayout ?? resolveHeroLayout()
+        transition.heroLayout = finalLayout
+        lockedHeroSideRef.current = transition.heroSide
+        restoredSlotRef.current = lockedSlotRef.current
+        heroLockRef.current = {
+          itemId: transition.itemId,
+          layout: finalLayout,
+          heroSide: transition.heroSide,
+        }
+        onTransitionCompleteRef.current?.({ heroSide: transition.heroSide })
       }
       return
     }

@@ -3,8 +3,10 @@ import type { CardLayout } from './layouts'
 import { MOBILE_SPIRAL_BREAKPOINT, SPIRAL } from './layouts'
 import { getInfiniteSpiralLayout } from './spiralInfinite'
 
-export const CONVERGE_DURATION = 0.95
-export const MOVE_DURATION = 0.88
+export const CONVERGE_DURATION = 0.58
+export const MOVE_DURATION = 0.46
+/** La carte focus part sur le côté avant la fin du rangement des autres. */
+export const MOVE_START_CONVERGE = 0.4
 
 /** Un seul point derrière la focus — toutes les cartes y convergent. */
 const PACKED_BEHIND_OFFSET = 0.07
@@ -201,7 +203,7 @@ function getConvergeLayoutAndOpacity(
     const startLayout =
       transition.spiralLayouts.get(focusSlot) ??
       getFocusSpiralLayout(focusSlot, offset)
-    const straightenT = easeOutCubic(Math.min(1, progress / 0.55))
+    const straightenT = easeOutCubic(Math.min(1, progress / 0.28))
     return {
       layout: straightenFocusLayout(
         startLayout,
@@ -305,11 +307,19 @@ export function getTransitionCardLayout(
     )
   }
 
-  const focusLayout = transition.focusFrontLayout
-
   if (!isFocus) {
+    if (transition.convergeT < 1) {
+      return getConvergeLayoutAndOpacity(
+        transition,
+        spiralSlot,
+        false,
+        transition.convergeT,
+      )
+    }
     return { layout: getBehindSpiralLayout(focusSlot, offset), opacity: 0 }
   }
+
+  const focusLayout = transition.focusFrontLayout
 
   const hero = transition.heroLayout
   if (!hero) {

@@ -162,172 +162,162 @@ export type GalleryImage = GalleryItem
  * `backgroundColors` alimente le dégradé de fond quand l’item est au premier plan.
  */
 export const GALLERY_ITEMS: GalleryItem[] = [
-  // galleryItem('01', 'https://picsum.photos/seed/gc-01/800/1000', 'Gallery 01', {
-  //   colors: bg('#4a3a7a', '#0e0c18', '#2a5080', '#06050a'),
-  // }),
-  // galleryItem('02', 'https://picsum.photos/seed/gc-02/800/1000', 'Gallery 02', {
-  //   colors: bg('#1f6b6b', '#081214', '#2a8a9a', '#040809'),
-  // }),
-  // galleryItem('03', 'https://picsum.photos/seed/gc-03/800/1000', 'Gallery 03', {
-  //   colors: bg('#8a3a5a', '#140a10', '#6a2848', '#080408'),
-  // }),
-  // galleryItem('04', 'https://picsum.photos/seed/gc-04/800/1000', 'Gallery 04', {
-  //   colors: bg('#3a6a3a', '#0a120a', '#2a5a4a', '#050805'),
-  // }),
-  // galleryItem('05', 'https://picsum.photos/seed/gc-05/800/1000', 'Gallery 05', {
-  //   colors: bg('#7a5a2a', '#121008', '#5a4018', '#080604'),
-  // }),
-  // galleryItem('06', 'https://picsum.photos/seed/gc-06/800/1000', 'Gallery 06', {
-  //   colors: bg('#2a5a8a', '#0a1018', '#3a7aaa', '#050810'),
-  // }),
-  // galleryItem('07', 'https://picsum.photos/seed/gc-07/800/1000', 'Gallery 07', {
-  //   colors: bg('#6a3a8a', '#100a14', '#4a2a6a', '#070408'),
-  // }),
-  // galleryItem('08', 'https://picsum.photos/seed/gc-08/800/1000', 'Gallery 08', {
-  //   colors: bg('#8a4a3a', '#140c0a', '#6a3828', '#080504'),
-  // }),
-  // galleryItem('09', 'https://picsum.photos/seed/gc-09/800/1000', 'Gallery 09', {
-  //   colors: bg('#3a7a7a', '#0a1414', '#2a5a5a', '#050808'),
-  // }),
-  // galleryItem('10', 'https://picsum.photos/seed/gc-10/800/1000', 'Gallery 10', {
-  //   colors: bg('#5a4a8a', '#0c0a14', '#3a306a', '#060408'),
-  // }),
-  // galleryItem('11', 'https://picsum.photos/seed/gc-11/800/1000', 'Gallery 11', {
-  //   colors: bg('#4a8a5a', '#0a140c', '#2a6a4a', '#050805'),
-  // }),
-  // galleryItem('12', 'https://picsum.photos/seed/gc-12/800/1000', 'Gallery 12', {
-  //   colors: bg('#8a6a3a', '#141008', '#6a5028', '#080604'),
-  // }),
-  // galleryItem('13', 'https://picsum.photos/seed/gc-13/800/1000', 'Gallery 13', {
-  //   colors: bg('#3a4a8a', '#0a0c14', '#2a386a', '#050610'),
-  // }),
-  // galleryItem('14', 'https://picsum.photos/seed/gc-14/800/1000', 'Gallery 14', {
-  //   colors: bg('#8a3a6a', '#140a10', '#6a2850', '#080408'),
-  // }),
-  // galleryItem('15', 'https://picsum.photos/seed/gc-15/800/1000', 'Gallery 15', {
-  //   colors: bg('#2a7a5a', '#0a120e', '#1a5a40', '#050806'),
-  // }),
-  // galleryItem('16', 'https://picsum.photos/seed/gc-16/800/1000', 'Gallery 16', {
-  //   colors: bg('#7a3a3a', '#140808', '#5a2828', '#080404'),
-  // }),
-  // galleryItem('17', 'https://picsum.photos/seed/gc-17/800/1000', 'Gallery 17', {
-  //   colors: bg('#4a6a8a', '#0a1014', '#3a5070', '#050810'),
-  // }),
-  galleryItem('18', '/jahia.webp', 'Jahia', 'Direction artistique et expérience digitale.', {
+ 
+  galleryItem('18', '/jahia.webp', 'Jahia', 'Intégration front-end et création du site Jahia.', {
     category: 'coding',
     favorite: false,
     colors: bg('#0e0053', '#4a3a96', '#057cc3', '#4a3a96'),
     details: {
       year: '2024',
-      role: 'Direction artistique · Front-end',
+      role: 'Intégration front-end · Création du site',
       highlights: [
-        'Identité visuelle et langage motion',
-        'Parcours immersif full-screen',
-        'Micro-interactions & transitions fluides',
+        'Développement et intégration du site complet',
+        'Mise en production des parcours et composants',
+        'Collaboration étroite avec les équipes produit',
       ],
       longDescription:
-        'Une expérience digitale où l’image et le mouvement portent le récit. Chaque section guide le regard avec une palette profonde et des transitions douces.',
+        'Projet d’intégration bout en bout : j’ai conçu et développé l’ensemble du site Jahia, des gabarits aux interactions, pour livrer une expérience cohérente, performante et fidèle aux maquettes.',
     },
   }),
-  galleryItem('19', '/videos/peugeot_reduce.webm', 'Peugeot', 'Site vitrine et motion design automobile.', {
+  galleryItem('19', '/videos/peugeot_reduce.webm', 'Peugeot', 'Intégration IHM pour les marques Stellantis.', {
     category: 'coding',
     favorite: true,
     colors: bg('#612548', '#1c1c38', '#3a6a30', '#84889b'),
     details: {
       year: '2023',
-      role: 'Motion design · Site vitrine',
+      role: 'Intégration IHM · Pixel perfect',
       highlights: [
-        'Héro animé et séquences produit',
-        'Direction colorimétrique automobile',
-        'Scroll narratif & rythme cinématique',
+        'Interfaces pour Peugeot, DS, Citroën, Jeep et Opel',
+        'Intégration rigoureuse au pixel près des maquettes',
+        'Travail main dans la main avec design et direction artistique',
       ],
       longDescription:
-        'Un site vitrine qui traduit la précision et la puissance de la marque. Le motion design souligne les lignes du véhicule et le rapport au terrain.',
+        'Intégration des interfaces embarquées pour plusieurs marques du groupe. Un travail de précision, en étroite collaboration avec les designers et la direction artistique, pour garantir une restitution fidèle et une expérience homogène à l’échelle de chaque véhicule.',
     },
   }),
-  galleryItem('20', '/videos/4mains_reduce.webm', '4 Mains', 'Identité visuelle et site e-commerce.', {
+  galleryItem('20', '/videos/4mains_reduce.webm', '4 Mains', 'Mini-documentaire sur une collaboration entre deux chefs.', {
     category: 'films',
     favorite: true,
     colors: bg('#97010a', '#788a85', '#788a85', '#97010a'),
     details: {
       year: '2023',
-      role: 'Identité · E-commerce',
+      role: 'Réalisation · Film documentaire',
       highlights: [
-        'Univers graphique artisanal',
-        'Catalogue produit épuré',
-        'Ton chaleureux & premium',
+        'Immersion dans les coulisses d’une collaboration artistique',
+        'Direction photo et narration du geste culinaire',
+        'Format court, rythme sensible et authentique',
       ],
       longDescription:
-        'Identité et boutique en ligne pour une marque à la main. Le rouge profond et les matières naturelles structurent une expérience tactile et sincère.',
+        'Réalisation d’un mini-documentaire qui suit les coulisses d’une collaboration entre deux chefs. Un regard intime sur le processus créatif, la matière et l’échange — loin du plat fini, au plus près du faire.',
     },
   }),
   galleryItem(
     '21',
     '/videos/dyson-gabin-chameroy_reduce.webm',
     'Dyson',
-    'Concept UX et interface produit connecté.',
+    'Création d’images pour le lancement Airwrap — Dyson France.',
     {
       category: 'films',
       favorite: true,
       colors: bg('#CC3277', '#A25925', '#CC3277', '#737C82'),
       details: {
         year: '2024',
-        role: 'UX · Interface produit',
+        role: 'Direction artistique · Production visuelle',
         highlights: [
-          'Écosystème connecté intuitif',
-          'Visualisation données & états',
-          'Prototype haute fidélité',
+          'Visuels pour le nouveau Dyson Airwrap',
+          'Mise en scène produit pour Dyson France',
+          'Esthétique soignée, lumière et matière travaillées',
         ],
         longDescription:
-          'Concept d’interface pour un produit intelligent : clarté des états, feedback immédiat et esthétique précise au service de l’usage quotidien.',
+          'Production d’images pour Dyson France à l’occasion du lancement du nouvel Airwrap. Une direction visuelle centrée sur le produit, sa finition et son usage, au service d’une campagne claire et premium.',
       },
     },
   ),
-  galleryItem('22', '/videos/greenhotels-home_reduce.webm', 'Green Hotels', 'Plateforme hôtelière durable et immersive.', {
+  galleryItem('22', '/videos/greenhotels-home_reduce.webm', 'Green Hotels', 'Refonte du site et création des maquettes.', {
     category: 'coding',
     colors: bg('#bcb6a8', '#020602', '#1D3B27', '#020602'),
     details: {
       year: '2023',
-      role: 'Plateforme · Brand experience',
+      role: 'Design · Développement front-end',
       highlights: [
-        'Storytelling durable',
-        'Immersion visuelle & typo',
-        'Parcours de réservation fluide',
+        'Conception des maquettes et de l’expérience utilisateur',
+        'Réalisation et intégration du nouveau site',
+        'Univers visuel aligné sur l’hospitalité durable',
       ],
       longDescription:
-        'Une plateforme qui met l’hospitalité durable au centre. Végétal, contraste et lumière composent un univers calme et engageant.',
+        'Refonte complète de la présence digitale Green Hotels : création des maquettes, définition des parcours, puis développement du site. Un projet qui lie design et intégration pour porter une marque engagée et accueillante.',
     },
   }),
-  galleryItem('23', '/videos/guerlain-home_reduce.webm', 'Guerlain', 'Expérience premium et storytelling de marque.', {
+  galleryItem('23', '/videos/guerlain-home_reduce.webm', 'Guerlain', 'Évolutions produit, correctifs et refonte sur le site Guerlain.', {
     category: 'coding',
     favorite: false,
     colors: bg('#750933', '#f3a527', '#C8A97E', '#492f25'),
     details: {
       year: '2024',
-      role: 'Expérience premium · Storytelling',
+      role: 'Front-end · Maintenance & évolutions',
       highlights: [
-        'Narration olfactive & visuelle',
-        'Palette or & bordeaux',
-        'Transitions luxe & silence visuel',
+        'Correction de bugs et stabilisation du site',
+        'Développement de nouvelles fonctionnalités',
+        'Refonte et revamping de sections clés',
       ],
       longDescription:
-        'Expérience digitale haute couture : chaque scroll révèle un fragment d’histoire, avec une palette chaude et des temps de pause assumés.',
+        'Intervention sur le site Guerlain : résolution de bugs, livraison de nouvelles features et refonte de pages dans l’esprit premium de la maison. Un travail d’évolution continue, exigeant sur la qualité et la fidélité à la charte.',
     },
   }),
-  galleryItem('25', '/videos/drmarteens_reduce.webm', 'Dr. Martens', 'Direction créative et univers de marque.', {
+  galleryItem('26', '/brasserie-placeholder.webp', 'Brasserie', 'Landing scroll — canette 3D et narration au défilement.', {
+    category: 'playground',
+    favorite: false,
+    href: '/brasserie',
+    colors: bg('#c9a227', '#1a1208', '#e8d5a3', '#0d0906'),
+    details: {
+      year: '2026',
+      role: 'Front-end · 3D · Landing',
+      highlights: [
+        'Intégration du modèle can.glb en WebGL',
+        'Rotation au scroll et fond qui évolue à chaque tour',
+        'Textes latéraux synchronisés avec la narration',
+      ],
+      longDescription:
+        'Landing immersive pour la Brasserie : une canette 3D au centre, qui tourne sur elle-même au scroll. À chaque rotation complète, le fond change de couleur et les textes gauche / droite racontent une nouvelle étape.',
+    },
+  }),
+  galleryItem(
+    '27',
+    '/quedesnumeros10-placeholder.webp',
+    'FIFA WORLD CUP 2026',
+    'Expérience interactive autour du numéro 10 et la Coupe du Monde 2026.',
+    {
+      category: 'playground',
+      favorite: false,
+      href: '/quedesnumeros10',
+      colors: bg('#f5c518', '#0a1628', '#1a5f2a', '#051018'),
+      details: {
+        year: '2026',
+        role: 'Front-end · Playground · Interaction',
+        highlights: [
+          'Exploration des numéros 10 emblématiques de la Coupe du Monde',
+          'Interface ludique autour de la compétition 2026',
+          'Expérience web dédiée, hors galerie',
+        ],
+        longDescription:
+          'Playground autour de la FIFA World Cup 2026 : une expérience interactive qui met en lumière le mythique numéro 10 — joueurs, maillots et moments de légende — dans l’attente de la prochaine édition.',
+      },
+    },
+  ),
+  galleryItem('25', '/videos/drmarteens_reduce.webm', 'Dr. Martens', 'Projet personnel — exploration créative autour de la marque.', {
     category: 'coding',
     favorite: true,
     colors: bg('#9ec8ee', '#7f2e26', '#1590ff', '#560a0c'),
     details: {
       year: '2024',
-      role: 'Direction créative · Web',
+      role: 'Projet personnel · Direction créative',
       highlights: [
-        'Attitude punk & heritage',
-        'Typo forte & contrastes',
-        'Mise en scène produit iconique',
+        'Concept libre, réalisé pour le plaisir',
+        'Exploration graphique de l’univers Dr. Martens',
+        'Mise en scène de l’icône sans contrainte client',
       ],
       longDescription:
-        'Un univers de marque qui oscille entre rebellion et patrimoine. Le bleu acier et le rouge profond portent l’icône sans la figer.',
+        'Un projet fait sur le temps libre, pour le kiff : une exploration créative autour de Dr. Martens, entre héritage punk et mise en scène contemporaine. L’occasion d’expérimenter sans brief, avec liberté totale.',
     },
   }),
 ]

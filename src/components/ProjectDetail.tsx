@@ -182,11 +182,17 @@ export function ProjectDetail({
               className="project-detail__cta project-detail__reveal"
               data-delay="6"
               href={item.href}
-              target="_blank"
-              rel="noopener noreferrer"
+              {...(item.href.startsWith('/')
+                ? {}
+                : {
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                  })}
             >
               Voir le projet
-              <span className="project-detail__cta-arrow" aria-hidden>↗</span>
+              <span className="project-detail__cta-arrow" aria-hidden>
+                {item.href.startsWith('/') ? '→' : '↗'}
+              </span>
             </a>
           ) : null}
         </div>

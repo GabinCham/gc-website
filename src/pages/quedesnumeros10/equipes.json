@@ -1,0 +1,61 @@
+[
+  { "groupe": "A", "equipe": "Mexique", "numero_10": "Alexis Vega", "couleurs": ["Vert", "Blanc"] },
+  { "groupe": "A", "equipe": "Afrique du Sud", "numero_10": "Percy Tau", "couleurs": ["Jaune", "Vert"] },
+  { "groupe": "A", "equipe": "Corée du Sud", "numero_10": "Lee Jae-sung", "couleurs": ["Rouge", "Bleu"] },
+  { "groupe": "A", "equipe": "République Tchèque", "numero_10": "Patrik Schick", "couleurs": ["Rouge", "Blanc"] },
+  
+  { "groupe": "B", "equipe": "Canada", "numero_10": "Jonathan David", "couleurs": ["Rouge", "Blanc"] },
+  { "groupe": "B", "equipe": "Bosnie-Herzégovine", "numero_10": "Haris Hajradinović", "couleurs": ["Bleu", "Jaune"] },
+  { "groupe": "B", "equipe": "Qatar", "numero_10": "Akram Afif", "couleurs": ["Bordeaux", "Blanc"] },
+  { "groupe": "B", "equipe": "Suisse", "numero_10": "Granit Xhaka", "couleurs": ["Rouge", "Blanc"] },
+  
+  { "groupe": "C", "equipe": "Brésil", "numero_10": "Neymar Jr", "couleurs": ["Jaune", "Vert"] },
+  { "groupe": "C", "equipe": "Maroc", "numero_10": "Amine Harit", "couleurs": ["Rouge", "Vert"] },
+  { "groupe": "C", "equipe": "Haïti", "numero_10": "Duckens Nazon", "couleurs": ["Bleu", "Rouge"] },
+  { "groupe": "C", "equipe": "Écosse", "numero_10": "John McGinn", "couleurs": ["Bleu marine", "Blanc"] },
+  
+  { "groupe": "D", "equipe": "États-Unis", "numero_10": "Christian Pulisic", "couleurs": ["Blanc", "Bleu"] },
+  { "groupe": "D", "equipe": "Paraguay", "numero_10": "Julio Enciso", "couleurs": ["Rouge", "Blanc"] },
+  { "groupe": "D", "equipe": "Australie", "numero_10": "Ajdin Hrustic", "couleurs": ["Jaune", "Vert"] },
+  { "groupe": "D", "equipe": "Turquie", "numero_10": "Hakan Çalhanoğlu", "couleurs": ["Rouge", "Blanc"] },
+  
+  { "groupe": "E", "equipe": "Allemagne", "numero_10": "Jamal Musiala", "couleurs": ["Blanc", "Noir"] },
+  { "groupe": "E", "equipe": "Curaçao", "numero_10": "Leandro Bacuna", "couleurs": ["Bleu", "Jaune"] },
+  { "groupe": "E", "equipe": "Côte d'Ivoire", "numero_10": "Karim Konaté", "couleurs": ["Orange", "Vert"] },
+  { "groupe": "E", "equipe": "Équateur", "numero_10": "Kendry Páez", "couleurs": ["Jaune", "Bleu"] },
+  
+  { "groupe": "F", "equipe": "Pays-Bas", "numero_10": "Xavi Simons", "couleurs": ["Orange", "Blanc"] },
+  { "groupe": "F", "equipe": "Japon", "numero_10": "Ritsu Doan", "couleurs": ["Bleu", "Blanc"] },
+  { "groupe": "F", "equipe": "Suède", "numero_10": "Emil Forsberg", "couleurs": ["Jaune", "Bleu"] },
+  { "groupe": "F", "equipe": "Tunisie", "numero_10": "Hannibal Mejbri", "couleurs": ["Rouge", "Blanc"] },
+  
+  { "groupe": "G", "equipe": "Belgique", "numero_10": "Yannick Carrasco", "couleurs": ["Rouge", "Noir"] },
+  { "groupe": "G", "equipe": "Égypte", "numero_10": "Mohamed Salah", "couleurs": ["Rouge", "Blanc"] },
+  { "groupe": "G", "equipe": "Iran", "numero_10": "Sardar Azmoun", "couleurs": ["Blanc", "Vert"] },
+  { "groupe": "G", "equipe": "Nouvelle-Zélande", "numero_10": "Sarpreet Singh", "couleurs": ["Blanc", "Noir"] },
+  
+  { "groupe": "H", "equipe": "Espagne", "numero_10": "Dani Olmo", "couleurs": ["Rouge", "Jaune"] },
+  { "groupe": "H", "equipe": "Cap-Vert", "numero_10": "Jamiro Monteiro", "couleurs": ["Bleu", "Blanc"] },
+  { "groupe": "H", "equipe": "Arabie Saoudite", "numero_10": "Salem Al-Dawsari", "couleurs": ["Vert", "Blanc"] },
+  { "groupe": "H", "equipe": "Uruguay", "numero_10": "Giorgian de Arrascaeta", "couleurs": ["Bleu ciel", "Noir"] },
+  
+  { "groupe": "I", "equipe": "France", "numero_10": "Kylian Mbappé", "couleurs": ["Bleu", "Blanc"] },
+  { "groupe": "I", "equipe": "Sénégal", "numero_10": "Sadio Mané", "couleurs": ["Vert", "Blanc"] },
+  { "groupe": "I", "equipe": "Irak", "numero_10": "Mohanad Ali", "couleurs": ["Vert", "Blanc"] },
+  { "groupe": "I", "equipe": "Norvège", "numero_10": "Martin Ødegaard", "couleurs": ["Rouge", "Bleu"] },
+  
+  { "groupe": "J", "equipe": "Argentine", "numero_10": "Lionel Messi", "couleurs": ["Bleu ciel", "Blanc"] },
+  { "groupe": "J", "equipe": "Algérie", "numero_10": "Saïd Benrahma", "couleurs": ["Blanc", "Vert"] },
+  { "groupe": "J", "equipe": "Autriche", "numero_10": "Marcel Sabitzer", "couleurs": ["Rouge", "Blanc"] },
+  { "groupe": "J", "equipe": "Jordanie", "numero_10": "Musa Al-Taamari", "couleurs": ["Blanc", "Rouge"] },
+  
+  { "groupe": "K", "equipe": "Portugal", "numero_10": "Bernardo Silva", "couleurs": ["Rouge", "Vert"] },
+  { "groupe": "K", "equipe": "République Démocratique du Congo", "numero_10": "Théo Bongonda", "couleurs": ["Bleu", "Rouge"] },
+  { "groupe": "K", "equipe": "Ouzbékistan", "numero_10": "Jaloliddin Masharipov", "couleurs": ["Blanc", "Bleu"] },
+  { "groupe": "K", "equipe": "Colombie", "numero_10": "James Rodríguez", "couleurs": ["Jaune", "Bleu"] },
+  
+  { "groupe": "L", "equipe": "Angleterre", "numero_10": "Jude Bellingham", "couleurs": ["Blanc", "Bleu marine"] },
+  { "groupe": "L", "equipe": "Croatie", "numero_10": "Luka Modrić", "couleurs": ["Rouge", "Blanc"] },
+  { "groupe": "L", "equipe": "Ghana", "numero_10": "André Ayew", "couleurs": ["Blanc", "Noir"] },
+  { "groupe": "L", "equipe": "Panama", "numero_10": "Yoel Bárcenas", "couleurs": ["Rouge", "Bleu"] }
+]
