@@ -34,7 +34,7 @@ export const BRASSERIE_CANS_CONFIG: BrasserieCanEntry[] = [
     textLeft: 'Le temps\nfaçonne',
     textRight: 'Équilibre\n& fraîcheur',
     textColorLeft: '#e8f5e9',
-    textColorRight: '#e8f5e9',
+    textColorRight: '#e8f589',
   },
   {
     id: 'can-3',
