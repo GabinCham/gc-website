@@ -62,9 +62,42 @@
   100% { opacity: 0.98; }
 }
 
+.gallery-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transition:
+    opacity 0.82s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: 50% 42%;
+}
+
+.gallery-stage--hidden {
+  opacity: 0;
+  transform: scale(0.94) translateY(2.5vh);
+  filter: blur(14px);
+  pointer-events: none;
+}
+
+.gallery-stage--project-hero {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.app--project-transition .overlay {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+
+.app--project-transition .audio-player {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .gallery-canvas {
   position: relative;
-  z-index: 1;
   width: 100%;
   height: 100%;
   touch-action: none;
@@ -133,6 +166,20 @@
   align-items: center;
   padding-top: 2.5rem;
   z-index: 2;
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app--project-open .overlay {
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+}
+
+.app--project-open .audio-player {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .gallery-autoscroll-toggle {
@@ -457,7 +504,9 @@
   -webkit-backdrop-filter: blur(10px);
   pointer-events: auto;
   opacity: 0.92;
-  transition: opacity 0.2s ease, border-color 0.2s ease;
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.2s ease;
 }
 
 .audio-player:hover {

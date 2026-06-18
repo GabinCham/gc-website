@@ -1,9 +1,9 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { SITE_TRACK } from './audio'
 import { AppBackground } from './components/AppBackground'
-import { AudioPlayer } from './components/AudioPlayer'
+// import { AudioPlayer } from './components/AudioPlayer' // temporairement retiré pour le dev
 import { GalleryAutoScrollToggle } from './components/GalleryAutoScrollToggle'
 import { GalleryLoader } from './components/GalleryLoader'
+import { ProjectDetail } from './components/ProjectDetail'
 import { VhsTuningPanel } from './components/VhsTuningPanel'
 import {
   GALLERY_ITEMS,
@@ -12,6 +12,7 @@ import {
   type GalleryCategory,
   type GalleryItem,
 } from './gallery/images'
+import type { HeroSide, ProjectTransitionCompleteMeta } from './gallery/projectTransition'
 import type { LayoutMode } from './gallery/layouts'
 import { useIdleMount } from './useIdleMount'
 import './App.css'
@@ -48,6 +49,12 @@ function App() {
     () => INITIAL_ITEM.backgroundColors,
   )
   const [cardHovered, setCardHovered] = useState(false)
+  const [transitionItem, setTransitionItem] = useState<GalleryItem | null>(null)
+  const transitionItemRef = useRef<GalleryItem | null>(null)
+  transitionItemRef.current = transitionItem
+  const [selectedProject, setSelectedProject] = useState<GalleryItem | null>(null)
+  const [selectedHeroSide, setSelectedHeroSide] = useState<HeroSide>('left')
+  const [galleryRestoreKey, setGalleryRestoreKey] = useState(0)
 
   const handleActiveItemChange = useCallback((item: GalleryItem) => {
     setActiveItem(item)
@@ -68,12 +75,27 @@ function App() {
   }, [])
 
   const handleItemSelect = useCallback((item: GalleryItem) => {
-    if (item.href) {
-      window.open(item.href, '_blank', 'noopener,noreferrer')
-      return
-    }
+    setTransitionItem(item)
+    setBackgroundColors(item.backgroundColors)
+    setCardHovered(false)
+  }, [])
 
-    console.info('[gallery] Projet sélectionné:', item.id, item.alt)
+  const handleTransitionComplete = useCallback(
+    (meta: ProjectTransitionCompleteMeta) => {
+      const item = transitionItemRef.current
+      if (item) setSelectedProject(item)
+      setSelectedHeroSide(meta.heroSide)
+      setTransitionItem(null)
+    },
+    [],
+  )
+
+  const handleCloseProject = useCallback(() => {
+    setSelectedProject(null)
+    setSelectedHeroSide('left')
+    setTransitionItem(null)
+    setCardHovered(false)
+    setGalleryRestoreKey((key) => key + 1)
   }, [])
 
   const handleGalleryReady = useCallback(() => {
@@ -114,27 +136,65 @@ function App() {
     preloadFilterModel(galleryCategory)
   }, [mountGallery, mode, galleryCategory, preloadFilterModel])
 
+  const projectTransitioning = transitionItem !== null
+  const projectOpen = selectedProject !== null
+  const galleryPaused = projectTransitioning || projectOpen
+
   return (
-    <div className="app">
-      <AppBackground colors={backgroundColors} cardHovered={cardHovered} />
+    <div
+      className={[
+        'app',
+        projectTransitioning ? 'app--project-transition' : '',
+        projectOpen ? 'app--project-open' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <AppBackground
+        colors={backgroundColors}
+        cardHovered={cardHovered && !galleryPaused}
+      />
       <GalleryLoader
         hidden={galleryReady && !filterLoaderVisible}
         variant={galleryReady ? 'filter' : 'initial'}
       />
       {mountGallery ? (
-        <Suspense fallback={null}>
-          <GalleryScene
-            mode={mode}
-            category={galleryCategory}
-            autoScrollEnabled={autoScrollEnabled}
-            onActiveItemChange={handleActiveItemChange}
-            onBackgroundItemChange={handleBackgroundItemChange}
-            onItemSelect={handleItemSelect}
-            onCardHoverChange={setCardHovered}
-            onReady={handleGalleryReady}
-            onSettled={handleGallerySettled}
-          />
-        </Suspense>
+        <div
+          className={[
+            'gallery-stage',
+            projectOpen ? 'gallery-stage--project-hero' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <Suspense fallback={null}>
+            <GalleryScene
+              mode={mode}
+              category={galleryCategory}
+              autoScrollEnabled={autoScrollEnabled && !projectOpen}
+              paused={false}
+              projectTransitionItem={transitionItem}
+              onProjectTransitionComplete={handleTransitionComplete}
+              lockedHeroItem={projectOpen ? selectedProject : null}
+              galleryRestoreKey={galleryRestoreKey}
+              onActiveItemChange={handleActiveItemChange}
+              onBackgroundItemChange={handleBackgroundItemChange}
+              onItemSelect={handleItemSelect}
+              onCardHoverChange={setCardHovered}
+              onReady={handleGalleryReady}
+              onSettled={handleGallerySettled}
+            />
+          </Suspense>
+        </div>
+      ) : null}
+
+      {selectedProject ? (
+        <ProjectDetail
+          item={selectedProject}
+          onClose={handleCloseProject}
+          use3dHero
+          heroSide={selectedHeroSide}
+        />
       ) : null}
 
       <header className="overlay">
@@ -247,12 +307,16 @@ function App() {
         </div>
       </header>
 
-      <AudioPlayer
+      {/* <AudioPlayer
         src={SITE_TRACK}
         syncPlaybackToScroll={mode === 'all'}
-      />
+      /> 
+      
+      temporairement retiré pour le dev
+      
+      */}
 
-      {mode === 'all' ? <VhsTuningPanel /> : null}
+      {mode === 'all' && !galleryPaused ? <VhsTuningPanel /> : null}
     </div>
   )
 }

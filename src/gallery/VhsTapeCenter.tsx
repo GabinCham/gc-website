@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react'
+import { getTransitionSceneFade, type ProjectTransitionState } from './projectTransition'
 import { useFrame, useLoader } from '@react-three/fiber'
 import { GalleryGLTFLoader } from './galleryGltfLoader'
 import * as THREE from 'three'
@@ -16,6 +17,15 @@ type VhsTapeCenterProps = {
   modelUrl?: string
   /** Réduction mobile — même ratio que les cartes pour rester proportionnel. */
   responsiveScale?: number
+  transitionRef?: RefObject<ProjectTransitionState | null>
+}
+
+type FadeMaterial = THREE.Material & {
+  userData: {
+    origTransparent?: boolean
+    origOpacity?: number
+    origDepthWrite?: boolean
+  }
 }
 
 function lerp3(
@@ -30,6 +40,14 @@ function lerp3(
   ]
 }
 
+function cloneFadeMaterial(material: THREE.Material): FadeMaterial {
+  const cloned = material.clone() as FadeMaterial
+  cloned.userData.origTransparent = material.transparent
+  cloned.userData.origOpacity = material.opacity
+  cloned.userData.origDepthWrite = material.depthWrite
+  return cloned
+}
+
 function prepareVhsModel(scene: THREE.Group) {
   const root = scene.clone(true)
   root.traverse((child) => {
@@ -37,6 +55,11 @@ function prepareVhsModel(scene: THREE.Group) {
     const mesh = child as THREE.Mesh
     mesh.castShadow = true
     mesh.receiveShadow = true
+    if (Array.isArray(mesh.material)) {
+      mesh.material = mesh.material.map(cloneFadeMaterial)
+    } else {
+      mesh.material = cloneFadeMaterial(mesh.material)
+    }
   })
 
   const box = new THREE.Box3().setFromObject(root)
@@ -54,24 +77,62 @@ function prepareVhsModel(scene: THREE.Group) {
   return root
 }
 
+function collectMeshMaterials(root: THREE.Object3D): FadeMaterial[] {
+  const materials: FadeMaterial[] = []
+  root.traverse((child) => {
+    if (!(child as THREE.Mesh).isMesh) return
+    const mesh = child as THREE.Mesh
+    if (Array.isArray(mesh.material)) materials.push(...(mesh.material as FadeMaterial[]))
+    else materials.push(mesh.material as FadeMaterial)
+  })
+  return materials
+}
+
+function restoreMaterial(material: FadeMaterial) {
+  material.transparent = material.userData.origTransparent ?? material.transparent
+  material.opacity = material.userData.origOpacity ?? 1
+  material.depthWrite = material.userData.origDepthWrite ?? true
+}
+
+function applyModelOpacity(materials: FadeMaterial[], opacity: number) {
+  if (opacity >= 0.999) {
+    for (const material of materials) restoreMaterial(material)
+    return
+  }
+
+  const visible = opacity > 0.02
+  for (const material of materials) {
+    material.transparent = true
+    material.opacity = opacity
+    material.depthWrite = visible
+  }
+}
+
 export function VhsTapeCenter({
   offsetRef,
   modelUrl = CENTER_MODEL_DEFAULT,
   responsiveScale = 1,
+  transitionRef,
 }: VhsTapeCenterProps) {
   const { scene } = useLoader(GalleryGLTFLoader, modelUrl)
   const groupRef = useRef<THREE.Group>(null)
   const innerRef = useRef<THREE.Group>(null)
+  const opacityRef = useRef(1)
   const spiralCurrent = useRef({
     position: [0, 0, 0] as [number, number, number],
     rotation: [0, 0, 0] as [number, number, number],
   })
 
   const model = useMemo(() => prepareVhsModel(scene), [scene])
+  const materials = useMemo(() => collectMeshMaterials(model), [model])
 
   useEffect(() => {
     setActiveCenterModel(modelUrl)
   }, [modelUrl])
+
+  useEffect(() => {
+    return () => applyModelOpacity(materials, 1)
+  }, [materials])
 
   useFrame((_, delta) => {
     const group = groupRef.current
@@ -102,6 +163,15 @@ export function VhsTapeCenter({
       spiral.rotation[2] + tuning.rotation[2] * DEG2RAD,
     )
     inner.scale.setScalar(tuning.scale * responsiveScale)
+
+    const transitionFade =
+      transitionRef?.current?.active
+        ? getTransitionSceneFade(transitionRef.current)
+        : 0
+    opacityRef.current = 1 - transitionFade
+
+    inner.visible = opacityRef.current > 0.02
+    applyModelOpacity(materials, opacityRef.current)
   })
 
   return (

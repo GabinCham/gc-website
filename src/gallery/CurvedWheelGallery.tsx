@@ -7,7 +7,7 @@ import {
   useState,
   type RefObject,
 } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { CurvedCard } from './CurvedCard'
 import {
   GALLERY_ITEMS,
@@ -29,6 +29,16 @@ import { useGalleryScroll } from './useGalleryScroll'
 import { getCenterModelUrl } from './centerModels'
 import { VhsTapeCenter } from './VhsTapeCenter'
 import { useIsMobileGallery } from './mobilePerf'
+import {
+  CONVERGE_DURATION,
+  MOVE_DURATION,
+  computeProjectHeroLayout,
+  createProjectTransitionState,
+  type HeroLockState,
+  type HeroSide,
+  type ProjectTransitionCompleteMeta,
+  type ProjectTransitionState,
+} from './projectTransition'
 
 const GALLERY_GROUP_Y = 0.2
 
@@ -38,8 +48,13 @@ type CurvedWheelGalleryProps = {
   autoScrollEnabled?: boolean
   onActiveItemChange?: (item: GalleryItem) => void
   onBackgroundItemChange?: (item: GalleryItem) => void
-  onItemSelect?: (item: GalleryItem) => void
+  onItemSelect?: (item: GalleryItem, spiralSlot?: number) => void
   onCardHoverChange?: (hovered: boolean) => void
+  projectTransitionItem?: GalleryItem | null
+  onProjectTransitionComplete?: (meta: ProjectTransitionCompleteMeta) => void
+  /** Carte 3D figée en hero — continuité avec la page projet. */
+  lockedHeroItem?: GalleryItem | null
+  galleryRestoreKey?: number
   onReady?: () => void
   onSettled?: () => void
 }
@@ -91,8 +106,10 @@ type SpiralSlotCardProps = {
   width: number
   height: number
   onSlotLoaded: (batchId: number, slot: number) => void
-  onSelect?: (item: GalleryItem) => void
+  onSelect?: (item: GalleryItem, spiralSlot?: number) => void
   onHoverChange?: (hovered: boolean) => void
+  transitionRef?: RefObject<ProjectTransitionState | null>
+  heroLockRef?: RefObject<HeroLockState | null>
 }
 
 function SpiralSlotCard({
@@ -106,6 +123,8 @@ function SpiralSlotCard({
   onSlotLoaded,
   onSelect,
   onHoverChange,
+  transitionRef,
+  heroLockRef,
 }: SpiralSlotCardProps) {
   const item = getGalleryItem(slot, items)
   const onSlotLoadedRef = useRef(onSlotLoaded)
@@ -127,6 +146,8 @@ function SpiralSlotCard({
       height={height}
       onSelect={onSelect}
       onHoverChange={onHoverChange}
+      transitionRef={transitionRef}
+      heroLockRef={heroLockRef}
     />
   )
 }
@@ -156,10 +177,23 @@ export function CurvedWheelGallery({
   onBackgroundItemChange,
   onItemSelect,
   onCardHoverChange,
+  projectTransitionItem,
+  onProjectTransitionComplete,
+  lockedHeroItem,
+  galleryRestoreKey = 0,
   onReady,
   onSettled,
 }: CurvedWheelGalleryProps) {
+  const { camera, size } = useThree()
   const isMobile = useIsMobileGallery()
+  const transitionRef = useRef<ProjectTransitionState | null>(null)
+  const heroLockRef = useRef<HeroLockState | null>(null)
+  const lockedSlotRef = useRef<number | null>(null)
+  const clickedSlotRef = useRef<number | null>(null)
+  const lockedHeroSideRef = useRef<HeroSide>('left')
+  const restoredSlotRef = useRef<number | null>(null)
+  const onTransitionCompleteRef = useRef(onProjectTransitionComplete)
+  onTransitionCompleteRef.current = onProjectTransitionComplete
   const items = useMemo(
     () => filterGalleryByCategory(GALLERY_ITEMS, category),
     [category],
@@ -199,6 +233,16 @@ export function CurvedWheelGallery({
     )
     onCardHoverChangeRef.current?.(cardHoverCountRef.current > 0)
   }
+
+  const handleItemSelect = useCallback(
+    (item: GalleryItem, spiralSlot?: number) => {
+      if (spiralSlot !== undefined) {
+        clickedSlotRef.current = spiralSlot
+      }
+      onItemSelect?.(item, spiralSlot)
+    },
+    [onItemSelect],
+  )
 
   const [visibleSlots, setVisibleSlots] = useState<number[]>([])
 
@@ -325,7 +369,151 @@ export function CurvedWheelGallery({
     }
   }, [assetBatchKey, reset, isAll, items, total, isMobile])
 
+  const { scale: galleryScale, cardSize, centerModelScale } =
+    useGalleryResponsiveLayout(mode)
+
+  const resolveHeroSide = useCallback((): HeroSide => {
+    return (
+      heroLockRef.current?.heroSide ??
+      transitionRef.current?.heroSide ??
+      lockedHeroSideRef.current
+    )
+  }, [])
+
+  const resolveHeroLayout = useCallback(() => {
+    return computeProjectHeroLayout(
+      camera,
+      size.width,
+      GALLERY_GROUP_Y,
+      galleryScale,
+      cardSize.width,
+      resolveHeroSide(),
+    )
+  }, [
+    camera,
+    size.width,
+    galleryScale,
+    cardSize.width,
+    resolveHeroSide,
+  ])
+
+  useEffect(() => {
+    if (!projectTransitionItem || !isAll || total === 0) {
+      transitionRef.current = null
+      return
+    }
+
+    const slots =
+      visibleSlots.length > 0
+        ? visibleSlots
+        : getVisibleSlots(offsetRef.current, total, isMobile)
+
+    const focusSlot = clickedSlotRef.current ?? frontSlotRef.current
+    lockedSlotRef.current = focusSlot
+    transitionRef.current = createProjectTransitionState(
+      projectTransitionItem.id,
+      focusSlot,
+      slots,
+      offsetRef.current,
+      size.width,
+      cardSize.width,
+    )
+  }, [projectTransitionItem?.id, isAll, total, isMobile, size.width, cardSize.width])
+
+  useEffect(() => {
+    if (!lockedHeroItem || !isAll) {
+      if (!transitionRef.current?.active) {
+        heroLockRef.current = null
+        transitionRef.current = null
+        lockedSlotRef.current = null
+        clickedSlotRef.current = null
+        lockedHeroSideRef.current = 'left'
+      }
+      return
+    }
+
+    if (transitionRef.current?.active) {
+      transitionRef.current.active = false
+    }
+
+    if (!heroLockRef.current) {
+      const heroSide = transitionRef.current?.heroSide ?? lockedHeroSideRef.current
+      restoredSlotRef.current = lockedSlotRef.current
+      heroLockRef.current = {
+        itemId: lockedHeroItem.id,
+        layout: computeProjectHeroLayout(
+          camera,
+          size.width,
+          GALLERY_GROUP_Y,
+          galleryScale,
+          cardSize.width,
+          heroSide,
+        ),
+        heroSide,
+      }
+    }
+  }, [lockedHeroItem?.id, isAll, galleryScale, cardSize.width, camera, size.width])
+
+  useEffect(() => {
+    if (!lockedHeroItem || !isAll) return
+
+    const syncHeroLayout = () => {
+      if (!heroLockRef.current) return
+      heroLockRef.current.layout = computeProjectHeroLayout(
+        camera,
+        size.width,
+        GALLERY_GROUP_Y,
+        galleryScale,
+        cardSize.width,
+        heroLockRef.current.heroSide,
+      )
+    }
+
+    window.addEventListener('resize', syncHeroLayout)
+    return () => window.removeEventListener('resize', syncHeroLayout)
+  }, [
+    lockedHeroItem?.id,
+    isAll,
+    galleryScale,
+    cardSize.width,
+    camera,
+    size.width,
+  ])
+
   useFrame((_, delta) => {
+    const transition = transitionRef.current
+
+    if (transition?.active) {
+      if (transition.phase === 'converge') {
+        transition.convergeT += delta / CONVERGE_DURATION
+        if (transition.convergeT >= 1) {
+          transition.convergeT = 1
+          transition.phase = 'move'
+          transition.heroLayout = resolveHeroLayout()
+        }
+      } else if (transition.phase === 'move') {
+        transition.heroLayout = resolveHeroLayout()
+        transition.moveT += delta / MOVE_DURATION
+        if (transition.moveT >= 1) {
+          transition.moveT = 1
+          transition.phase = 'done'
+          const finalLayout = transition.heroLayout ?? resolveHeroLayout()
+          transition.heroLayout = finalLayout
+          lockedHeroSideRef.current = transition.heroSide
+          restoredSlotRef.current = lockedSlotRef.current
+          heroLockRef.current = {
+            itemId: transition.itemId,
+            layout: finalLayout,
+            heroSide: transition.heroSide,
+          }
+          onTransitionCompleteRef.current?.({ heroSide: transition.heroSide })
+        }
+      }
+      return
+    }
+
+    if (heroLockRef.current) return
+
     if (isAll && total > 0) {
       offsetRef.current = step(delta)
 
@@ -354,9 +542,6 @@ export function CurvedWheelGallery({
     }
   })
 
-  const { scale: galleryScale, cardSize, centerModelScale } =
-    useGalleryResponsiveLayout(mode)
-
   const simpleItems = useMemo(
     () =>
       items.map((item, index) => ({
@@ -368,19 +553,28 @@ export function CurvedWheelGallery({
   )
 
   const centerModelUrl = getCenterModelUrl(category)
+  const projectHeroLocked =
+    lockedHeroItem !== null && heroLockRef.current !== null
+  const slotsToDraw =
+    isAll && projectHeroLocked && lockedSlotRef.current !== null
+      ? [lockedSlotRef.current]
+      : slotsToRender
 
   return (
     <>
-      {!isMobile ? <fog attach="fog" args={['#1a1a24', 22, 52]} /> : null}
+      {!isMobile && !projectHeroLocked ? (
+        <fog attach="fog" args={['#1a1a24', 22, 52]} />
+      ) : null}
       <GalleryLighting mobile={isMobile} />
 
       <group position={[0, GALLERY_GROUP_Y, 0]} scale={galleryScale}>
-        {isAll ? (
+        {isAll && !projectHeroLocked ? (
           <Suspense key={centerModelUrl} fallback={null}>
             <VhsTapeCenter
               offsetRef={offsetRef}
               modelUrl={centerModelUrl}
               responsiveScale={centerModelScale}
+              transitionRef={transitionRef}
             />
             <CenterModelLoaded
               batchId={activeBatchId}
@@ -389,8 +583,11 @@ export function CurvedWheelGallery({
           </Suspense>
         ) : null}
         {isAll
-          ? slotsToRender.map((slot) => (
-              <Suspense key={`slot-${slot}`} fallback={null}>
+          ? slotsToDraw.map((slot) => {
+              const restoreSuffix =
+                restoredSlotRef.current === slot ? galleryRestoreKey : 0
+              return (
+              <Suspense key={`slot-${slot}-${restoreSuffix}`} fallback={null}>
                 <SpiralSlotCard
                   slot={slot}
                   batchId={activeBatchId}
@@ -400,11 +597,14 @@ export function CurvedWheelGallery({
                   width={cardSize.width}
                   height={cardSize.height}
                   onSlotLoaded={handleSlotLoaded}
-                  onSelect={onItemSelect}
+                  onSelect={handleItemSelect}
                   onHoverChange={handleCardHoverChange}
+                  transitionRef={projectHeroLocked ? undefined : transitionRef}
+                  heroLockRef={projectHeroLocked ? heroLockRef : undefined}
                 />
               </Suspense>
-            ))
+              )
+            })
           : simpleItems.map(({ layout, item }) => (
               <Suspense key={item.id} fallback={null}>
                 <CurvedCard
@@ -414,7 +614,7 @@ export function CurvedWheelGallery({
                   height={cardSize.height}
                   isInteractive
                   playVideo
-                  onSelect={onItemSelect}
+                  onSelect={handleItemSelect}
                   onHoverChange={handleCardHoverChange}
                 />
               </Suspense>

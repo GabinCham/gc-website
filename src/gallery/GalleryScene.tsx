@@ -5,16 +5,22 @@ import { CurvedWheelGallery } from './CurvedWheelGallery'
 import { preloadCenterModelForCategory } from './preloadCenterModel'
 import { type GalleryCategory, type GalleryItem } from './images'
 import type { LayoutMode } from './layouts'
+import type { ProjectTransitionCompleteMeta } from './projectTransition'
 import { useIsMobileGallery } from './mobilePerf'
 
 type GallerySceneProps = {
   mode: LayoutMode
   category: GalleryCategory | null
   autoScrollEnabled?: boolean
+  paused?: boolean
   onActiveItemChange?: (item: GalleryItem) => void
   onBackgroundItemChange?: (item: GalleryItem) => void
   onItemSelect?: (item: GalleryItem) => void
   onCardHoverChange?: (hovered: boolean) => void
+  projectTransitionItem?: GalleryItem | null
+  onProjectTransitionComplete?: (meta: ProjectTransitionCompleteMeta) => void
+  lockedHeroItem?: GalleryItem | null
+  galleryRestoreKey?: number
   onReady?: () => void
   onSettled?: () => void
 }
@@ -23,10 +29,15 @@ export function GalleryScene({
   mode,
   category,
   autoScrollEnabled,
+  paused = false,
   onActiveItemChange,
   onBackgroundItemChange,
   onItemSelect,
   onCardHoverChange,
+  projectTransitionItem,
+  onProjectTransitionComplete,
+  lockedHeroItem,
+  galleryRestoreKey = 0,
   onReady,
   onSettled,
 }: GallerySceneProps) {
@@ -48,7 +59,7 @@ export function GalleryScene({
       }}
       style={{ background: 'transparent' }}
       dpr={isMobile ? 1 : [1, 2]}
-      frameloop="always"
+      frameloop={paused ? 'never' : 'always'}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping
         gl.toneMappingExposure = isMobile ? 1.5 : 1.65
@@ -62,6 +73,10 @@ export function GalleryScene({
         onBackgroundItemChange={onBackgroundItemChange}
         onItemSelect={onItemSelect}
         onCardHoverChange={onCardHoverChange}
+        projectTransitionItem={projectTransitionItem}
+        onProjectTransitionComplete={onProjectTransitionComplete}
+        lockedHeroItem={lockedHeroItem}
+        galleryRestoreKey={galleryRestoreKey}
         onReady={onReady}
         onSettled={onSettled}
       />

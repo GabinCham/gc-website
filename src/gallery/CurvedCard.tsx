@@ -28,6 +28,12 @@ import type { CardLayout } from './layouts'
 import { getGalleryScrollVelocity } from './galleryScrollSpeed'
 import { isMobileGallery } from './mobilePerf'
 import {
+  getTransitionCardLayout,
+  lerpAngle,
+  type HeroLockState,
+  type ProjectTransitionState,
+} from './projectTransition'
+import {
   getInfiniteSpiralLayout,
   isSpiralInteractiveSlot,
   isSpiralVideoSlot,
@@ -57,8 +63,11 @@ type CurvedCardProps = {
   isInteractive?: boolean
   /** Lit la vidéo si true ; ignoré en mode spirale (calculé via offsetRef). */
   playVideo?: boolean
-  onSelect?: (item: GalleryItem) => void
+  onSelect?: (item: GalleryItem, spiralSlot?: number) => void
   onHoverChange?: (hovered: boolean) => void
+  transitionRef?: RefObject<ProjectTransitionState | null>
+  /** Carte figée en position hero (page projet — continuité 3D). */
+  heroLockRef?: RefObject<HeroLockState | null>
 }
 
 type CurvedCardMeshProps = {
@@ -72,8 +81,11 @@ type CurvedCardMeshProps = {
   offsetRef?: RefObject<number>
   frontSlotRef?: RefObject<number>
   isInteractive?: boolean
-  onSelect?: (item: GalleryItem) => void
+  onSelect?: (item: GalleryItem, spiralSlot?: number) => void
   onHoverChange?: (hovered: boolean) => void
+  transitionRef?: RefObject<ProjectTransitionState | null>
+  /** Carte figée en position hero (page projet — continuité 3D). */
+  heroLockRef?: RefObject<HeroLockState | null>
 }
 
 function lerp3(
@@ -85,6 +97,18 @@ function lerp3(
     from[0] + (to[0] - from[0]) * t,
     from[1] + (to[1] - from[1]) * t,
     from[2] + (to[2] - from[2]) * t,
+  ]
+}
+
+function lerpRotation(
+  from: [number, number, number],
+  to: [number, number, number],
+  t: number,
+): [number, number, number] {
+  return [
+    lerpAngle(from[0], to[0], t),
+    lerpAngle(from[1], to[1], t),
+    lerpAngle(from[2], to[2], t),
   ]
 }
 
@@ -112,6 +136,8 @@ function CurvedCardMesh({
   isInteractive = false,
   onSelect,
   onHoverChange,
+  transitionRef,
+  heroLockRef,
 }: CurvedCardMeshProps) {
   const skipCardBack = isMobileGallery()
   const planeSegments =
@@ -129,6 +155,7 @@ function CurvedCardMesh({
   const pointerDown = useRef<{ x: number; y: number } | null>(null)
   const interactiveRef = useRef(isInteractive)
   const snapOnNextFrameRef = useRef(spiralSlot !== undefined)
+  const wasHeroLockedRef = useRef(false)
   const [hovered, setHovered] = useState(false)
 
   texture.colorSpace = THREE.SRGBColorSpace
@@ -206,11 +233,15 @@ function CurvedCardMesh({
     if (dx * dx + dy * dy > CLICK_DRAG_PX * CLICK_DRAG_PX) return
 
     playCardClickSound()
-    onSelect?.(item)
+    onSelect?.(item, spiralSlot)
   }
 
   useFrame((_, delta) => {
-    if (spiralSlot !== undefined && frontSlotRef) {
+    const transition = transitionRef?.current
+
+    if (transition?.active) {
+      interactiveRef.current = false
+    } else if (spiralSlot !== undefined && frontSlotRef) {
       interactiveRef.current = isSpiralInteractiveSlot(
         spiralSlot,
         frontSlotRef.current,
@@ -246,7 +277,8 @@ function CurvedCardMesh({
       )
     }
 
-    const targetHover = interactiveRef.current && hovered ? 1 : 0
+    const targetHover =
+      !transition?.active && interactiveRef.current && hovered ? 1 : 0
     hoverAmount.current +=
       (targetHover - hoverAmount.current) * (1 - Math.exp(-14 * delta))
     frontMaterial.emissive.set('#ffffff')
@@ -256,23 +288,84 @@ function CurvedCardMesh({
     const mesh = meshRef.current
     if (!group || !mesh) return
 
-    const targetLayout = resolveTargetLayout(layout, spiralSlot, offsetRef)
-    if (!targetLayout) return
+    const heroLock = heroLockRef?.current ?? null
+
+    if (wasHeroLockedRef.current && !heroLock && spiralSlot !== undefined) {
+      snapOnNextFrameRef.current = true
+      hoverAmount.current = 0
+    }
+    wasHeroLockedRef.current = heroLock !== null
+
+    const spiralLayout = resolveTargetLayout(layout, spiralSlot, offsetRef)
+    if (!spiralLayout && !heroLock) return
+
+    let targetLayout = heroLock?.layout ?? spiralLayout!
+    let cardOpacity = 1
+
+    if (heroLock) {
+      targetLayout = heroLock.layout
+      cardOpacity = 1
+      interactiveRef.current = false
+    } else if (
+      transition?.active &&
+      spiralLayout &&
+      spiralSlot !== undefined &&
+      transition.slotOrder.has(spiralSlot)
+    ) {
+      const result = getTransitionCardLayout(
+        transition,
+        spiralLayout,
+        spiralSlot,
+        item.id,
+      )
+      targetLayout = result.layout
+      cardOpacity = result.opacity
+    }
+
+    const cardVisible = cardOpacity > 0.02
+    mesh.visible = cardVisible
+    if (!skipCardBack) backMaterial.visible = cardVisible
+
+    frontMaterial.transparent = cardOpacity < 1
+    frontMaterial.opacity = cardOpacity
+    frontMaterial.depthWrite = cardVisible
+    if (!skipCardBack) {
+      backMaterial.transparent = cardOpacity < 1
+      backMaterial.opacity = cardOpacity
+      backMaterial.depthWrite = cardVisible
+    }
 
     const c = current.current
+    const isFocusCard =
+      transition?.active && spiralSlot === transition.focusSlot
+    mesh.renderOrder = isFocusCard ? 20 : 0
 
-    if (snapOnNextFrameRef.current) {
+    const moveComplete =
+      isFocusCard &&
+      transition?.active &&
+      transition.phase !== 'converge' &&
+      transition.moveT >= 1
+    const snapLayout = heroLock || moveComplete
+
+    const applySnapLayout = (layout: CardLayout) => {
+      c.position = [...layout.position]
+      c.rotation = [...layout.rotation]
+      c.scale = layout.scale
+      c.bendRadius = layout.bendRadius
+      bendRef.current = layout.bendRadius
+      updateCurvedPlaneGeometry(mesh.geometry, layout.bendRadius)
+    }
+
+    if (snapOnNextFrameRef.current && !transition?.active && !heroLock) {
       snapOnNextFrameRef.current = false
-      c.position = [...targetLayout.position]
-      c.rotation = [...targetLayout.rotation]
-      c.scale = targetLayout.scale
-      c.bendRadius = targetLayout.bendRadius
-      bendRef.current = targetLayout.bendRadius
-      updateCurvedPlaneGeometry(mesh.geometry, targetLayout.bendRadius)
+      applySnapLayout(targetLayout)
+    } else if (snapLayout) {
+      applySnapLayout(targetLayout)
     } else {
-      const blend = 1 - Math.exp(-6 * delta)
+      const blendRate = transition?.active ? 16 : 6
+      const blend = 1 - Math.exp(-blendRate * delta)
       c.position = lerp3(c.position, targetLayout.position, blend)
-      c.rotation = lerp3(c.rotation, targetLayout.rotation, blend)
+      c.rotation = lerpRotation(c.rotation, targetLayout.rotation, blend)
       c.scale += (targetLayout.scale - c.scale) * blend
       c.bendRadius += (targetLayout.bendRadius - c.bendRadius) * blend
 
@@ -282,7 +375,10 @@ function CurvedCardMesh({
       }
     }
 
-    const hoverScale = 1 + (HOVER_SCALE - 1) * hoverAmount.current
+    const hoverScale =
+      transition?.active || heroLock
+        ? 1
+        : 1 + (HOVER_SCALE - 1) * hoverAmount.current
     group.position.set(...c.position)
     group.rotation.set(...c.rotation)
     group.scale.setScalar(c.scale * hoverScale)

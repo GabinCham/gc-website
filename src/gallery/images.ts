@@ -14,6 +14,13 @@ export type GalleryBackgroundColors = {
   deep?: string
 }
 
+export type GalleryProjectDetails = {
+  year?: string
+  role?: string
+  highlights?: string[]
+  longDescription?: string
+}
+
 export type GalleryItem = {
   id: string
   url: string
@@ -23,8 +30,10 @@ export type GalleryItem = {
   category: Exclude<GalleryCategory, 'fav'>
   /** Affiché dans le filtre favoris (♥) */
   favorite?: boolean
-  /** Lien ouvert au clic quand la carte est face à nous */
+  /** Lien externe (CTA sur la page projet) */
   href?: string
+  /** Contenu enrichi pour la page détail */
+  details?: GalleryProjectDetails
   /**
    * Optionnel — déduit automatiquement depuis l’extension
    * (.jpg, .png, .webp… → image ; .mp4, .webm → video).
@@ -82,6 +91,7 @@ function galleryItem(
     colors?: GalleryBackgroundColors
     alt?: string
     favorite?: boolean
+    details?: GalleryProjectDetails
   },
 ): GalleryItem {
   return {
@@ -94,8 +104,21 @@ function galleryItem(
     favorite: options.favorite,
     href: options.href,
     mediaType: options.mediaType,
+    details: options.details,
     backgroundColors: options.colors ?? bg('#2a2840', '#0a0a0f'),
   }
+}
+
+const CATEGORY_LABELS: Record<Exclude<GalleryCategory, 'fav'>, string> = {
+  coding: 'Digital',
+  films: 'Film & motion',
+  playground: 'Playground',
+}
+
+export function getGalleryCategoryLabel(
+  category: Exclude<GalleryCategory, 'fav'>,
+): string {
+  return CATEGORY_LABELS[category]
 }
 
 const VIDEO_EXTENSIONS = ['.mp4', '.webm'] as const
@@ -194,16 +217,49 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     category: 'coding',
     favorite: false,
     colors: bg('#0e0053', '#4a3a96', '#057cc3', '#4a3a96'),
+    details: {
+      year: '2024',
+      role: 'Direction artistique · Front-end',
+      highlights: [
+        'Identité visuelle et langage motion',
+        'Parcours immersif full-screen',
+        'Micro-interactions & transitions fluides',
+      ],
+      longDescription:
+        'Une expérience digitale où l’image et le mouvement portent le récit. Chaque section guide le regard avec une palette profonde et des transitions douces.',
+    },
   }),
   galleryItem('19', '/videos/peugeot_reduce.webm', 'Peugeot', 'Site vitrine et motion design automobile.', {
     category: 'coding',
     favorite: true,
     colors: bg('#612548', '#1c1c38', '#3a6a30', '#84889b'),
+    details: {
+      year: '2023',
+      role: 'Motion design · Site vitrine',
+      highlights: [
+        'Héro animé et séquences produit',
+        'Direction colorimétrique automobile',
+        'Scroll narratif & rythme cinématique',
+      ],
+      longDescription:
+        'Un site vitrine qui traduit la précision et la puissance de la marque. Le motion design souligne les lignes du véhicule et le rapport au terrain.',
+    },
   }),
   galleryItem('20', '/videos/4mains_reduce.webm', '4 Mains', 'Identité visuelle et site e-commerce.', {
     category: 'films',
     favorite: true,
     colors: bg('#97010a', '#788a85', '#788a85', '#97010a'),
+    details: {
+      year: '2023',
+      role: 'Identité · E-commerce',
+      highlights: [
+        'Univers graphique artisanal',
+        'Catalogue produit épuré',
+        'Ton chaleureux & premium',
+      ],
+      longDescription:
+        'Identité et boutique en ligne pour une marque à la main. Le rouge profond et les matières naturelles structurent une expérience tactile et sincère.',
+    },
   }),
   galleryItem(
     '21',
@@ -214,21 +270,65 @@ export const GALLERY_ITEMS: GalleryItem[] = [
       category: 'films',
       favorite: true,
       colors: bg('#CC3277', '#A25925', '#CC3277', '#737C82'),
+      details: {
+        year: '2024',
+        role: 'UX · Interface produit',
+        highlights: [
+          'Écosystème connecté intuitif',
+          'Visualisation données & états',
+          'Prototype haute fidélité',
+        ],
+        longDescription:
+          'Concept d’interface pour un produit intelligent : clarté des états, feedback immédiat et esthétique précise au service de l’usage quotidien.',
+      },
     },
   ),
   galleryItem('22', '/videos/greenhotels-home_reduce.webm', 'Green Hotels', 'Plateforme hôtelière durable et immersive.', {
     category: 'coding',
     colors: bg('#bcb6a8', '#020602', '#1D3B27', '#020602'),
+    details: {
+      year: '2023',
+      role: 'Plateforme · Brand experience',
+      highlights: [
+        'Storytelling durable',
+        'Immersion visuelle & typo',
+        'Parcours de réservation fluide',
+      ],
+      longDescription:
+        'Une plateforme qui met l’hospitalité durable au centre. Végétal, contraste et lumière composent un univers calme et engageant.',
+    },
   }),
   galleryItem('23', '/videos/guerlain-home_reduce.webm', 'Guerlain', 'Expérience premium et storytelling de marque.', {
     category: 'coding',
     favorite: false,
     colors: bg('#750933', '#f3a527', '#C8A97E', '#492f25'),
+    details: {
+      year: '2024',
+      role: 'Expérience premium · Storytelling',
+      highlights: [
+        'Narration olfactive & visuelle',
+        'Palette or & bordeaux',
+        'Transitions luxe & silence visuel',
+      ],
+      longDescription:
+        'Expérience digitale haute couture : chaque scroll révèle un fragment d’histoire, avec une palette chaude et des temps de pause assumés.',
+    },
   }),
   galleryItem('25', '/videos/drmarteens_reduce.webm', 'Dr. Martens', 'Direction créative et univers de marque.', {
     category: 'coding',
     favorite: true,
     colors: bg('#9ec8ee', '#7f2e26', '#1590ff', '#560a0c'),
+    details: {
+      year: '2024',
+      role: 'Direction créative · Web',
+      highlights: [
+        'Attitude punk & heritage',
+        'Typo forte & contrastes',
+        'Mise en scène produit iconique',
+      ],
+      longDescription:
+        'Un univers de marque qui oscille entre rebellion et patrimoine. Le bleu acier et le rouge profond portent l’icône sans la figer.',
+    },
   }),
 ]
 
