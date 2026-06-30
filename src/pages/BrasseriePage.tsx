@@ -6,12 +6,15 @@ import {
   CAN_TEXTURE_URLS,
 } from './brasserie/content'
 import { BrasserieScene } from './brasserie/BrasserieScene'
+import { BrasserieEnvironment } from './brasserie/BrasserieEnvironment'
 import { useBrasserieScroll } from './brasserie/useBrasserieScroll'
 import { GalleryGLTFLoader } from '../gallery/galleryGltfLoader'
 import { useLoader } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { BrasserieCanConfig } from './brasserie/content'
 import { BrasserieSlidingPanel } from './brasserie/BrasserieSlidingPanel'
+import { BrasserieOutro } from './brasserie/BrasserieOutro'
+import { BrasserieCanSequence } from './brasserie/BrasserieCanSequence'
 import { CanTuningPanel } from '../components/CanTuningPanel'
 import './BrasseriePage.css'
 
@@ -19,15 +22,20 @@ export function BrasseriePage() {
   const {
     scrollRef,
     viewportRef,
+    scrollTrackRef,
     scrollProgressRef,
     activeCanIndex,
     scrollHintVisible,
+    gravityMode,
+    setGravityMode,
+    resetToStart,
   } = useBrasserieScroll()
 
   const can: BrasserieCanConfig = BRASSERIE_CANS[activeCanIndex]!
 
   useEffect(() => {
     useLoader.preload(GalleryGLTFLoader, CAN_GLB_URL)
+    BrasserieEnvironment.preload()
     if (CAN_TEXTURE_URLS.length > 0) {
       useLoader.preload(THREE.TextureLoader, CAN_TEXTURE_URLS)
     }
@@ -35,8 +43,9 @@ export function BrasseriePage() {
 
   return (
     <div className="brasserie-page" ref={scrollRef}>
-      <div className="brasserie-page__viewport" ref={viewportRef}>
-        <div className="brasserie-page__bg" aria-hidden>
+      <div className="brasserie-page__hero">
+        <div className="brasserie-page__viewport" ref={viewportRef}>
+          <div className="brasserie-page__bg" aria-hidden>
           <div className="brasserie-page__bg-half brasserie-page__bg-half--left" />
           <div className="brasserie-page__bg-half brasserie-page__bg-half--right" />
         </div>
@@ -44,6 +53,20 @@ export function BrasseriePage() {
         <a className="brasserie-page__back" href="/">
           ← Portfolio
         </a>
+
+        <div className="brasserie-page__canvas-layer" aria-hidden>
+          <Suspense
+            fallback={
+              <p className="brasserie-page__loading">Chargement de la canette…</p>
+            }
+          >
+            <BrasserieScene
+              scrollProgressRef={scrollProgressRef}
+              gravityMode={gravityMode}
+              onGravityModeChange={setGravityMode}
+            />
+          </Suspense>
+        </div>
 
         <div className="brasserie-page__layout">
           <BrasserieSlidingPanel
@@ -53,15 +76,7 @@ export function BrasseriePage() {
             side="left"
           />
 
-          <div className="brasserie-page__stage" aria-hidden>
-            <Suspense
-              fallback={
-                <p className="brasserie-page__loading">Chargement de la canette…</p>
-              }
-            >
-              <BrasserieScene scrollProgressRef={scrollProgressRef} />
-            </Suspense>
-          </div>
+          <div className="brasserie-page__stage-spacer" aria-hidden />
 
           <BrasserieSlidingPanel
             text={can.textRight}
@@ -101,9 +116,15 @@ export function BrasseriePage() {
 
       <div
         className="brasserie-page__scroll-track"
+        ref={scrollTrackRef}
         style={{ height: `${BRASSERIE_SCROLL_TURNS * 100}vh` }}
         aria-hidden
       />
+      </div>
+
+      <BrasserieOutro />
+
+      <BrasserieCanSequence scrollRef={scrollRef} onLoopReset={resetToStart} />
 
       <CanTuningPanel />
     </div>

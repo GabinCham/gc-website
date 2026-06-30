@@ -14,20 +14,15 @@ export type CanTuning = {
 
 export const CAN_TUNING: CanTuning = {
   position: [0, 0, 0],
-  rotation: [0, 180, 0],
-  scale: 2.2,
+  rotation: [17, 132, -34.5],
+  scale: 1,
   followScroll: true,
-  fitMargin: 0.88,
-  cameraOffset: [-2.95, 0, -2.2],
+  fitMargin: 1.22,
+  cameraOffset: [0, 0, -4],
 }
 
-/** Incrémente quand tu changes CAN_TUNING dans le code pour invalider le cache navigateur. */
-export const CAN_TUNING_VERSION = 6
-
-const STORAGE_KEY = 'gc-can-tuning'
-
 export const canTuningRef: { current: CanTuning } = {
-  current: loadCanTuning(),
+  current: { ...CAN_TUNING },
 }
 
 const listeners = new Set<() => void>()
@@ -51,7 +46,6 @@ export function getCanTuningSnapshot(): CanTuning {
 
 export function setCanTuning(next: CanTuning) {
   canTuningRef.current = next
-  saveCanTuning(next)
   notify()
 }
 
@@ -61,56 +55,6 @@ export function patchCanTuning(patch: Partial<CanTuning>) {
 
 export function resetCanTuning() {
   setCanTuning({ ...CAN_TUNING })
-}
-
-function mergeTuning(defaults: CanTuning, parsed: Partial<CanTuning>): CanTuning {
-  return {
-    ...defaults,
-    ...parsed,
-    position: [
-      parsed.position?.[0] ?? defaults.position[0],
-      parsed.position?.[1] ?? defaults.position[1],
-      parsed.position?.[2] ?? defaults.position[2],
-    ],
-    rotation: [
-      parsed.rotation?.[0] ?? defaults.rotation[0],
-      parsed.rotation?.[1] ?? defaults.rotation[1],
-      parsed.rotation?.[2] ?? defaults.rotation[2],
-    ],
-    scale: parsed.scale ?? defaults.scale,
-    followScroll: parsed.followScroll ?? defaults.followScroll,
-    fitMargin: parsed.fitMargin ?? defaults.fitMargin,
-    cameraOffset: [
-      parsed.cameraOffset?.[0] ?? defaults.cameraOffset[0],
-      parsed.cameraOffset?.[1] ?? defaults.cameraOffset[1],
-      parsed.cameraOffset?.[2] ?? defaults.cameraOffset[2],
-    ],
-  }
-}
-
-function loadCanTuning(): CanTuning {
-  if (typeof localStorage === 'undefined') return { ...CAN_TUNING }
-
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { ...CAN_TUNING }
-    const parsed = JSON.parse(raw) as Partial<CanTuning> & { version?: number }
-    if (parsed.version !== CAN_TUNING_VERSION) return { ...CAN_TUNING }
-    return mergeTuning(CAN_TUNING, parsed)
-  } catch {
-    return { ...CAN_TUNING }
-  }
-}
-
-function saveCanTuning(tuning: CanTuning) {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ ...tuning, version: CAN_TUNING_VERSION }),
-    )
-  } catch {
-    /* quota / private mode */
-  }
 }
 
 export function formatCanTuningSnippet(tuning: CanTuning): string {

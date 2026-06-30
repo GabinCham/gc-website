@@ -1,9 +1,10 @@
-import { useFrame, useLoader, useThree } from '@react-three/fiber'
+import { useFrame, useLoader } from '@react-three/fiber'
 import { useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { GalleryGLTFLoader } from '../../gallery/galleryGltfLoader'
-import { fitBrasserieCamera } from './brasserieCameraFit'
+import { BrasserieCameraFit } from './BrasserieCameraFit'
 import { canTuningRef } from './canTuning'
+import { useBrasserieCanGravity } from './useBrasserieCanGravity'
 import {
   BRASSERIE_SCROLL_TURNS,
   CAN_GLB_URL,
@@ -18,6 +19,7 @@ const DEG2RAD = Math.PI / 180
 
 type BrasserieCanProps = {
   scrollProgressRef: RefObject<number>
+  onGravityModeChange?: (active: boolean) => void
 }
 
 function isLabelMaterial(material: THREE.Material): boolean {
@@ -62,13 +64,12 @@ function prepareCanModel(scene: THREE.Group) {
     for (const material of materials) {
       if (!material) continue
       if ('envMapIntensity' in material) {
-        ;(material as THREE.MeshStandardMaterial).envMapIntensity = 1.1
+        ;(material as THREE.MeshStandardMaterial).envMapIntensity = 1.35
       }
     }
   })
 
   const labelMesh = findLabelMesh(root)
-
   if (labelMesh) {
     const source = Array.isArray(labelMesh.material)
       ? labelMesh.material[0]
@@ -154,8 +155,10 @@ function CanLabelTextures({
   return null
 }
 
-export function BrasserieCan({ scrollProgressRef }: BrasserieCanProps) {
-  const { camera, size } = useThree()
+export function BrasserieCan({
+  scrollProgressRef,
+  onGravityModeChange,
+}: BrasserieCanProps) {
   const { scene } = useLoader(GalleryGLTFLoader, CAN_GLB_URL)
   const { root, labelMaterial } = useMemo(
     () => prepareCanModel(scene),
@@ -165,8 +168,17 @@ export function BrasserieCan({ scrollProgressRef }: BrasserieCanProps) {
   labelMaterialRef.current = labelMaterial
 
   const fitTargetRef = useRef<THREE.Group>(null)
+  const gravityGroupRef = useRef<THREE.Group>(null)
   const tuningGroupRef = useRef<THREE.Group>(null)
   const scrollGroupRef = useRef<THREE.Group>(null)
+  const canRadiusRef = useRef(1)
+
+  const { onPointerDown, onPointerMove, onPointerUp } = useBrasserieCanGravity({
+    scrollProgressRef,
+    gravityGroupRef,
+    canRadiusRef,
+    onGravityModeChange,
+  })
 
   useFrame(() => {
     const fitTarget = fitTargetRef.current
@@ -176,6 +188,13 @@ export function BrasserieCan({ scrollProgressRef }: BrasserieCanProps) {
 
     const tuning = canTuningRef.current
     const progress = scrollProgressRef.current ?? 0
+
+    const box = new THREE.Box3().setFromObject(root)
+    const sphere = new THREE.Sphere()
+    box.getBoundingSphere(sphere)
+    if (Number.isFinite(sphere.radius) && sphere.radius > 0) {
+      canRadiusRef.current = sphere.radius
+    }
 
     fitTarget.position.set(
       tuning.position[0],
@@ -191,23 +210,24 @@ export function BrasserieCan({ scrollProgressRef }: BrasserieCanProps) {
     scrollGroup.rotation.y = tuning.followScroll
       ? progress * BRASSERIE_SCROLL_TURNS * Math.PI * 2
       : 0
-
-    fitBrasserieCamera(
-      camera,
-      fitTarget,
-      size.width,
-      size.height,
-      tuning,
-    )
   })
 
   return (
     <group ref={fitTargetRef}>
-      <group ref={tuningGroupRef}>
-        <group ref={scrollGroupRef}>
-          <primitive object={root} />
+      <group
+        ref={gravityGroupRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
+      >
+        <group ref={tuningGroupRef}>
+          <group ref={scrollGroupRef}>
+            <primitive object={root} />
+          </group>
         </group>
       </group>
+      <BrasserieCameraFit target={fitTargetRef} object={root} />
       {labelMaterial && CAN_TEXTURE_URLS.length > 0 ? (
         <CanLabelTextures
           scrollProgressRef={scrollProgressRef}

@@ -10,7 +10,7 @@
     "compress:video": "node scripts/compress-video.mjs",
     "generate:poster": "node scripts/generate-poster.mjs",
     "prebuild": "node scripts/generate-audio-assets.mjs",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/copy-spa-fallbacks.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",

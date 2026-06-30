@@ -5,14 +5,21 @@
   inset: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow-anchor: none;
+  overscroll-behavior: none;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, #e8d5a3 35%, transparent) transparent;
+}
+
+.brasserie-page__hero {
+  position: relative;
+  z-index: 1;
 }
 
 .brasserie-page__viewport {
   position: sticky;
   top: 0;
+  z-index: 1;
   height: 100dvh;
   overflow: hidden;
   --brasserie-bg-left: #1a1208;
@@ -47,6 +54,152 @@
   pointer-events: none;
 }
 
+.brasserie-page__outro {
+  position: relative;
+  z-index: 5;
+  min-height: 100dvh;
+  background: var(--brasserie-outro-bg, #0f0e12);
+  color: var(--brasserie-outro-text, #f5f0ea);
+}
+
+.brasserie-page__outro-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(1.25rem, 3vh, 2rem);
+  min-height: 100dvh;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: clamp(5rem, 12vh, 8rem) clamp(1.5rem, 5vw, 3rem)
+    clamp(3rem, 8vh, 5rem);
+}
+
+.brasserie-page__outro-eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--brasserie-outro-accent, #e8d5a3) 72%, transparent);
+}
+
+.brasserie-page__outro-title {
+  margin: 0;
+  font-family: 'Changa One', sans-serif;
+  font-size: clamp(2.75rem, 9vw, 5.5rem);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.brasserie-page__outro-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 36rem;
+}
+
+.brasserie-page__outro-paragraph {
+  margin: 0;
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(0.92rem, 2.2vw, 1.05rem);
+  font-weight: 500;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--brasserie-outro-text, #f5f0ea) 82%, transparent);
+}
+
+.brasserie-page__outro-cta {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+  color: var(--brasserie-outro-accent, #e8d5a3);
+  text-decoration: none;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: opacity 0.2s ease;
+}
+
+.brasserie-page__outro-cta:hover {
+  opacity: 0.75;
+}
+
+.brasserie-page__sequence {
+  position: relative;
+  z-index: 6;
+}
+
+.brasserie-page__sequence-sticky {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100dvh;
+  height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.brasserie-page__sequence-words {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.brasserie-page__sequence-word {
+  position: absolute;
+  margin: 0;
+  line-height: 0.88;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  user-select: none;
+  transform-origin: center center;
+}
+
+.brasserie-page__sequence-word--changa {
+  font-family: 'Changa One', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.brasserie-page__sequence-word--unbounded {
+  font-family: 'Unbounded', sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.brasserie-page__sequence-canvas {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.brasserie-page__sequence-track,
+.brasserie-page__sequence-hold-track,
+.brasserie-page__sequence-loop-track {
+  pointer-events: none;
+}
+
+.brasserie-page__sequence-loop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.brasserie-page__sequence-loop-overlay--visible {
+  opacity: 1;
+}
+
+.brasserie-page__sequence-loop-overlay--fade-out {
+  opacity: 0;
+}
+
 .brasserie-page__back {
   position: absolute;
   top: 1.25rem;
@@ -68,19 +221,28 @@
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(14rem, 42vw) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(10rem, 28vw) minmax(0, 1fr);
   align-items: center;
   gap: clamp(0.75rem, 2vw, 2rem);
   height: 100%;
   padding: clamp(4.5rem, 10vh, 6rem) clamp(1rem, 3vw, 2.5rem)
     clamp(3rem, 8vh, 4rem);
+  pointer-events: none;
 }
 
-.brasserie-page__stage {
-  position: relative;
-  height: min(85vh, 48rem);
-  min-height: 22rem;
-  overflow: visible;
+.brasserie-page__layout > * {
+  pointer-events: auto;
+}
+
+.brasserie-page__canvas-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.brasserie-page__stage-spacer {
+  min-height: min(62vh, 34rem);
+  pointer-events: none;
 }
 
 .brasserie-page__canvas {
@@ -90,6 +252,15 @@
   height: 100% !important;
   display: block;
   pointer-events: none;
+}
+
+.brasserie-page__canvas--interactive {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.brasserie-page__canvas--interactive:active {
+  cursor: grabbing;
 }
 
 .brasserie-page__loading {
@@ -304,16 +475,16 @@
 @media (max-width: 900px) {
   .brasserie-page__layout {
     grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(18rem, 52vh) auto auto;
+    grid-template-rows: auto minmax(14rem, 42vh) auto auto;
     align-content: center;
     padding-top: 4rem;
     padding-bottom: 5rem;
   }
 
-  .brasserie-page__stage {
+  .brasserie-page__stage-spacer {
     grid-row: 2;
-    height: 100%;
     min-height: 14rem;
+    height: min(42vh, 28rem);
   }
 
   .brasserie-page__panel {

@@ -3,11 +3,15 @@ import {
   type BrasserieCanEntry,
 } from './cans.config'
 
-export const CAN_GLB_URL = '/glb/orange_soda.glb'
+export const CAN_GLB_URL = '/glb/can.glb'
+export const BRASSERIE_HDR_URL = new URL(
+  '../../../assets/forest_slope_4k.hdr',
+  import.meta.url,
+).href
 
-/** Mesh du label cannette — repli sur le matériau sodaCan si absent après export. */
-export const CAN_LABEL_MESH_NAMES = ['pepsi_sodaCan_0'] as const
-export const CAN_LABEL_MATERIAL_NAMES = ['sodaCan'] as const
+/** Mesh du label cannette (nom Blender) — repli sur UV_Wrap si absent après export. */
+export const CAN_LABEL_MESH_NAMES = ['Object_9', 'Object_5'] as const
+export const CAN_LABEL_MATERIAL_NAMES = ['UV_Wrap'] as const
 
 export type { BrasserieCanEntry }
 

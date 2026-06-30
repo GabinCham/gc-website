@@ -238,10 +238,8 @@ export function CanTuningPanel() {
           </footer>
 
           <p className="can-tuning__hint">
-            Les réglages sont sauvegardés dans le navigateur. Quand tu colles
-            le code dans <code>canTuning.ts</code>, incrémente aussi{' '}
-            <code>CAN_TUNING_VERSION</code> pour appliquer les nouvelles valeurs
-            par défaut.
+            Les réglages ne sont pas persistés. Colle le code exporté dans{' '}
+            <code>canTuning.ts</code> quand tu es satisfait.
           </p>
         </div>
       ) : null}
