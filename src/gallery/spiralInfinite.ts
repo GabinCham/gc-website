@@ -1,5 +1,6 @@
 import { SPIRAL } from './layouts'
 import type { GalleryItem } from './images'
+import { PERF_TOGGLES } from './perfToggles'
 
 const FRONT_ANGLE = Math.PI / 2
 
@@ -61,7 +62,9 @@ export function getImageIndexForSlot(slot: number, total: number) {
 }
 
 export function getVisibleSlotsBuffer(total: number, mobile = false) {
-  if (mobile) return Math.max(5, Math.ceil(total * 0.35))
+  if (mobile) {
+    return Math.max(5, Math.ceil(total * PERF_TOGGLES.mobileBufferFraction))
+  }
   return Math.max(10, Math.ceil(total * 0.55))
 }
 

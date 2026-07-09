@@ -7,6 +7,7 @@ import { type GalleryCategory, type GalleryItem } from './images'
 import type { LayoutMode } from './layouts'
 import type { ProjectTransitionCompleteMeta } from './projectTransition'
 import { useIsMobileGallery } from './mobilePerf'
+import { PERF_TOGGLES } from './perfToggles'
 
 type GallerySceneProps = {
   mode: LayoutMode
@@ -59,7 +60,9 @@ export function GalleryScene({
       }}
       style={{ background: 'transparent' }}
       dpr={isMobile ? 1 : [1, 2]}
-      frameloop={paused ? 'never' : 'always'}
+      frameloop={
+        paused || PERF_TOGGLES.galleryFrameloop === 'never' ? 'never' : 'always'
+      }
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping
         gl.toneMappingExposure = isMobile ? 1.5 : 1.65

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GalleryBackgroundColors } from '../gallery/images'
+import { buildBackgroundGradient } from '../gallery/images'
 import { useIsMobileGallery } from '../gallery/mobilePerf'
+import { PERF_TOGGLES } from '../gallery/perfToggles'
 import { MeshGradientCanvas } from './MeshGradientCanvas'
 
 const FADE_MS = 2200
@@ -107,7 +109,14 @@ export function AppBackground({ colors, cardHovered = false }: AppBackgroundProp
   return (
     <div className={backgroundClass} aria-hidden>
       <div className="mesh-gradient">
-        <MeshGradientCanvas colors={displayColors} reduced={isMobile} />
+        {PERF_TOGGLES.meshGradient ? (
+          <MeshGradientCanvas colors={displayColors} reduced={isMobile} />
+        ) : (
+          <div
+            className="mesh-gradient__canvas"
+            style={{ background: buildBackgroundGradient(displayColors) }}
+          />
+        )}
       </div>
       <div className="crt-overlay" />
     </div>

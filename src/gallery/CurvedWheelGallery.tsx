@@ -29,6 +29,7 @@ import { useGalleryScroll } from './useGalleryScroll'
 import { getCenterModelUrl } from './centerModels'
 import { VhsTapeCenter } from './VhsTapeCenter'
 import { useIsMobileGallery } from './mobilePerf'
+import { applyPerfToGalleryItem, PERF_TOGGLES } from './perfToggles'
 import {
   CONVERGE_DURATION,
   MOVE_DURATION,
@@ -196,7 +197,8 @@ export function CurvedWheelGallery({
   const onTransitionCompleteRef = useRef(onProjectTransitionComplete)
   onTransitionCompleteRef.current = onProjectTransitionComplete
   const items = useMemo(
-    () => filterGalleryByCategory(GALLERY_ITEMS, category),
+    () =>
+      filterGalleryByCategory(GALLERY_ITEMS, category).map(applyPerfToGalleryItem),
     [category],
   )
   const total = items.length
@@ -322,7 +324,7 @@ export function CurvedWheelGallery({
     assetBatchIdRef.current += 1
     assetBatchRef.current = {
       id: assetBatchIdRef.current,
-      glbReady: initialReadyRef.current,
+      glbReady: initialReadyRef.current || !PERF_TOGGLES.vhsCenter,
       pendingSlots: new Set(getVisibleSlots(0, total, isMobile)),
       finished: false,
     }
@@ -579,7 +581,7 @@ export function CurvedWheelGallery({
       <GalleryLighting mobile={isMobile} />
 
       <group position={[0, GALLERY_GROUP_Y, 0]} scale={galleryScale}>
-        {isAll && !projectHeroLocked ? (
+        {isAll && !projectHeroLocked && PERF_TOGGLES.vhsCenter ? (
           <Suspense key={centerModelUrl} fallback={null}>
             <VhsTapeCenter
               offsetRef={offsetRef}
