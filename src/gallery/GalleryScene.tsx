@@ -12,7 +12,6 @@ import { PERF_TOGGLES } from './perfToggles'
 type GallerySceneProps = {
   mode: LayoutMode
   category: GalleryCategory | null
-  autoScrollEnabled?: boolean
   paused?: boolean
   onActiveItemChange?: (item: GalleryItem) => void
   onBackgroundItemChange?: (item: GalleryItem) => void
@@ -29,7 +28,6 @@ type GallerySceneProps = {
 export function GalleryScene({
   mode,
   category,
-  autoScrollEnabled,
   paused = false,
   onActiveItemChange,
   onBackgroundItemChange,
@@ -71,7 +69,6 @@ export function GalleryScene({
       <CurvedWheelGallery
         mode={mode}
         category={category}
-        autoScrollEnabled={autoScrollEnabled}
         onActiveItemChange={onActiveItemChange}
         onBackgroundItemChange={onBackgroundItemChange}
         onItemSelect={onItemSelect}

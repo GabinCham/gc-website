@@ -147,13 +147,9 @@
   position: relative;
   width: 100%;
   height: 100%;
-  touch-action: none;
-  cursor: grab;
+  touch-action: manipulation;
+  cursor: default;
   background: transparent;
-}
-
-.gallery-canvas:active {
-  cursor: grabbing;
 }
 
 .gallery-canvas.gallery-canvas--pointer {
@@ -296,6 +292,52 @@
 }
 
 .app--project-open .audio-player {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gallery-step-nav {
+  position: fixed;
+  bottom: 1.75rem;
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.gallery-step-nav__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.gallery-step-nav__btn:hover,
+.gallery-step-nav__btn:focus-visible {
+  color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.07);
+  outline: none;
+}
+
+.app--project-open .gallery-step-nav,
+.app--project-transition .gallery-step-nav {
   opacity: 0;
   pointer-events: none;
 }
@@ -730,6 +772,21 @@
 @media (max-width: 768px) {
   .overlay {
     padding-top: 1rem;
+  }
+
+  .gallery-step-nav {
+    bottom: 1.15rem;
+    gap: 0.55rem;
+  }
+
+  .gallery-step-nav__btn {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .audio-player {
+    bottom: 1.15rem;
+    right: 1rem;
   }
 
   .gallery-autoscroll-toggle {

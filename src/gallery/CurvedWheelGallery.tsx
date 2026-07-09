@@ -29,6 +29,7 @@ import { useGalleryScroll } from './useGalleryScroll'
 import { getCenterModelUrl } from './centerModels'
 import { VhsTapeCenter } from './VhsTapeCenter'
 import { useIsMobileGallery } from './mobilePerf'
+import { setGalleryNavApi } from './galleryNav'
 import { applyPerfToGalleryItem, PERF_TOGGLES } from './perfToggles'
 import {
   CONVERGE_DURATION,
@@ -47,7 +48,6 @@ const GALLERY_GROUP_Y = 0.2
 type CurvedWheelGalleryProps = {
   mode: LayoutMode
   category: GalleryCategory | null
-  autoScrollEnabled?: boolean
   onActiveItemChange?: (item: GalleryItem) => void
   onBackgroundItemChange?: (item: GalleryItem) => void
   onItemSelect?: (item: GalleryItem, spiralSlot?: number) => void
@@ -174,7 +174,6 @@ function CenterModelLoaded({
 export function CurvedWheelGallery({
   mode,
   category,
-  autoScrollEnabled = true,
   onActiveItemChange,
   onBackgroundItemChange,
   onItemSelect,
@@ -203,10 +202,23 @@ export function CurvedWheelGallery({
   )
   const total = items.length
   const isAll = mode === 'all'
-  const { step, reset } = useGalleryScroll(
-    isAll && total > 0,
-    autoScrollEnabled,
-  )
+  const { step, reset, stepBy } = useGalleryScroll(isAll && total > 0, {
+    freeScroll: false,
+  })
+
+  useEffect(() => {
+    if (!isAll || total === 0) {
+      setGalleryNavApi(null)
+      return
+    }
+
+    setGalleryNavApi({
+      prev: () => stepBy(-1),
+      next: () => stepBy(1),
+    })
+
+    return () => setGalleryNavApi(null)
+  }, [isAll, total, stepBy])
   const offsetRef = useRef(0)
   const frontSlotRef = useRef(0)
   const backgroundSlotRef = useRef(0)

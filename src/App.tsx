@@ -2,8 +2,8 @@ import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRe
 import { gsap } from 'gsap'
 import { AppBackground } from './components/AppBackground'
 import { AudioPlayer } from './components/AudioPlayer'
-import { GalleryAutoScrollToggle } from './components/GalleryAutoScrollToggle'
 import { GalleryLoader } from './components/GalleryLoader'
+import { GalleryStepNav } from './components/GalleryStepNav'
 import { ProjectDetail } from './components/ProjectDetail'
 import { SimpleProjectsList } from './components/SimpleProjectsList'
 import {
@@ -47,7 +47,6 @@ function App() {
   )
   const simpleItems = useMemo(() => sortGalleryForSimpleList(visibleItems), [visibleItems])
 
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true)
   const [activeItem, setActiveItem] = useState(INITIAL_ITEM)
   const [backgroundColors, setBackgroundColors] = useState<GalleryBackgroundColors>(
     () => INITIAL_ITEM.backgroundColors,
@@ -270,7 +269,6 @@ function App() {
               <GalleryScene
                 mode={mode}
                 category={galleryCategory}
-                autoScrollEnabled={autoScrollEnabled && !projectOpen}
                 paused={false}
                 projectTransitionItem={transitionItem}
                 onProjectTransitionComplete={handleTransitionComplete}
@@ -288,6 +286,8 @@ function App() {
         </div>
       ) : null}
 
+      <GalleryStepNav hidden={mode !== 'all' || projectOpen || !galleryReady} />
+
       {selectedProject ? (
         <ProjectDetail
           item={selectedProject}
@@ -300,13 +300,6 @@ function App() {
       ) : null}
 
       <header className="overlay">
-        {mode === 'all' ? (
-          <GalleryAutoScrollToggle
-            enabled={autoScrollEnabled}
-            onToggle={() => setAutoScrollEnabled((on) => !on)}
-          />
-        ) : null}
-
         <div className="site-brand">
           <img
             className="site-brand__logo"

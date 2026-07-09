@@ -13,16 +13,11 @@ import { getGalleryPosterUrl } from './images'
  * 5. galleryVideos → true
  */
 export const PERF_TOGGLES = {
-  /** Fond MeshGradient animé (2e contexte WebGL) */
-  meshGradient: false,
-  /** Modèle VHS au centre de la spirale */
-  vhsCenter: false,
-  /** Fraction du buffer mobile — 0.35 = prod, 0.15 = léger */
-  mobileBufferFraction: 0.15,
-  /** Boucle de rendu Three.js — 'never' fige tout le canvas */
+  meshGradient: true,
+  vhsCenter: true,
+  mobileBufferFraction: 0.35,
   galleryFrameloop: 'always' as 'always' | 'never',
-  /** Lectures vidéo sur les cartes — false = posters uniquement */
-  galleryVideos: false,
+  galleryVideos: true,
 } as const
 
 /** Valeur prod du buffer mobile (pour référence). */
