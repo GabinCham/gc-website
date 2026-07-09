@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { gsap } from 'gsap'
 import {
   getGalleryCategoryLabel,
   getGalleryMediaType,
@@ -17,6 +18,8 @@ type ProjectDetailProps = {
   item: GalleryItem
   onClose: () => void
   onCloseStart?: () => void
+  /** Ferme instantanément sans animation de sortie. */
+  instantClose?: boolean
   /** La carte hero reste la mesh 3D visible derrière le layout. */
   use3dHero?: boolean
   /** Côté de la carte hero (texte de l'autre côté). */
@@ -24,6 +27,14 @@ type ProjectDetailProps = {
 }
 
 const CLOSE_MS = 720
+
+function getRandomCtaPalette() {
+  const hue = Math.floor(Math.random() * 360)
+  const start = `hsl(${hue} 82% 52%)`
+  const end = `hsl(${(hue + 28) % 360} 90% 72%)`
+  const glow = `hsl(${hue} 78% 50%)`
+  return { start, end, glow }
+}
 
 function ProjectMedia({ item }: { item: GalleryItem }) {
   const isVideo = getGalleryMediaType(item) === 'video'
@@ -57,11 +68,15 @@ export function ProjectDetail({
   item,
   onClose,
   onCloseStart,
+  instantClose = false,
   use3dHero = false,
   heroSide = 'left',
 }: ProjectDetailProps) {
   const [phase, setPhase] = useState<'enter' | 'open' | 'leave'>('enter')
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const ctaZoneRef = useRef<HTMLDivElement | null>(null)
+  const ctaRef = useRef<HTMLAnchorElement | null>(null)
+  const ctaLabelRef = useRef<HTMLSpanElement | null>(null)
 
   const details = item.details
   const categoryLabel = getGalleryCategoryLabel(item.category)
@@ -78,13 +93,17 @@ export function ProjectDetail({
   const handleClose = useCallback(() => {
     if (phase === 'leave') return
     onCloseStart?.()
+    if (instantClose) {
+      onClose()
+      return
+    }
     setPhase('leave')
     if (closeTimer.current) clearTimeout(closeTimer.current)
     closeTimer.current = setTimeout(() => {
       closeTimer.current = null
       onClose()
     }, CLOSE_MS)
-  }, [onClose, onCloseStart, phase])
+  }, [instantClose, onClose, onCloseStart, phase])
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setPhase('open'))
@@ -104,6 +123,87 @@ export function ProjectDetail({
       if (closeTimer.current) clearTimeout(closeTimer.current)
     }
   }, [])
+
+  useEffect(() => {
+    const zone = ctaZoneRef.current
+    const cta = ctaRef.current
+    const ctaLabel = ctaLabelRef.current
+    if (!zone || !cta || !ctaLabel) return
+
+    const palette = getRandomCtaPalette()
+    cta.style.setProperty('--cta-grad-start', palette.start)
+    cta.style.setProperty('--cta-grad-end', palette.end)
+    cta.style.setProperty('--cta-glow', palette.glow)
+
+    const strength = 0.4
+    const labelStrength = 0.24
+
+    const onMove = (event: MouseEvent) => {
+      const rect = zone.getBoundingClientRect()
+      const x = gsap.utils.mapRange(
+        rect.left,
+        rect.right,
+        -rect.width / 2,
+        rect.width / 2,
+        event.clientX,
+      )
+      const y = gsap.utils.mapRange(
+        rect.top,
+        rect.bottom,
+        -rect.height / 2,
+        rect.height / 2,
+        event.clientY,
+      )
+
+      gsap.to(cta, {
+        x: x * strength,
+        y: y * strength,
+        duration: 0.4,
+        ease: 'power2.out',
+        overwrite: 'auto',
+      })
+
+      gsap.to(ctaLabel, {
+        x: x * labelStrength,
+        y: y * labelStrength,
+        duration: 0.4,
+        ease: 'power2.out',
+        overwrite: true,
+      })
+    }
+
+    const onLeave = () => {
+      gsap.to(cta, {
+        x: 0,
+        y: 0,
+        duration: 0.7,
+        ease: 'elastic.out(1, 0.4)',
+        overwrite: 'auto',
+      })
+
+      gsap.to(ctaLabel, {
+        x: 0,
+        y: 0,
+        duration: 0.7,
+        ease: 'elastic.out(1, 0.4)',
+        overwrite: true,
+      })
+    }
+
+    zone.addEventListener('mousemove', onMove)
+    zone.addEventListener('mouseleave', onLeave)
+    cta.addEventListener('blur', onLeave)
+
+    return () => {
+      zone.removeEventListener('mousemove', onMove)
+      zone.removeEventListener('mouseleave', onLeave)
+      cta.removeEventListener('blur', onLeave)
+      gsap.killTweensOf(cta)
+      gsap.killTweensOf(ctaLabel)
+      gsap.set(cta, { x: 0, y: 0 })
+      gsap.set(ctaLabel, { x: 0, y: 0 })
+    }
+  }, [item.id, item.href])
 
   return (
     <div
@@ -169,24 +269,29 @@ export function ProjectDetail({
             ))}
           </ul>
 
-          {item.href ? (
+          <div ref={ctaZoneRef} className="project-detail__cta-zone project-detail__reveal" data-delay="6">
             <a
-              className="project-detail__cta project-detail__reveal"
-              data-delay="6"
-              href={item.href}
-              {...(item.href.startsWith('/')
+              ref={ctaRef}
+              className="project-detail__cta"
+              href={item.href ?? ''}
+              onClick={(event) => {
+                if (!item.href) event.preventDefault()
+              }}
+              {...(!item.href || item.href.startsWith('/')
                 ? {}
                 : {
                     target: '_blank',
                     rel: 'noopener noreferrer',
                   })}
             >
-              Voir le projet
+              <span ref={ctaLabelRef} className="project-detail__cta-label">
+                Voir le projet
+              </span>
               <span className="project-detail__cta-arrow" aria-hidden>
-                {item.href.startsWith('/') ? '→' : '↗'}
+                {!item.href || item.href.startsWith('/') ? '→' : '↗'}
               </span>
             </a>
-          ) : null}
+          </div>
         </div>
       </div>
     </div>

@@ -23,6 +23,8 @@ export type GalleryProjectDetails = {
 
 export type GalleryItem = {
   id: string
+  /** Ordre affiché dans la vue simple (plus petit = plus haut). */
+  simpleOrder?: number
   url: string
   alt: string
   title: string
@@ -79,6 +81,19 @@ export function filterGalleryByCategory(
   return items.filter((item) => item.category === category)
 }
 
+export function sortGalleryForSimpleList(items: GalleryItem[]): GalleryItem[] {
+  return [...items].sort((a, b) => {
+    const aOrder = a.simpleOrder ?? Number.POSITIVE_INFINITY
+    const bOrder = b.simpleOrder ?? Number.POSITIVE_INFINITY
+    if (aOrder !== bOrder) return aOrder - bOrder
+
+    const aId = Number(a.id)
+    const bId = Number(b.id)
+    if (Number.isFinite(aId) && Number.isFinite(bId)) return aId - bId
+    return a.id.localeCompare(b.id, 'fr', { sensitivity: 'base' })
+  })
+}
+
 function galleryItem(
   id: string,
   url: string,
@@ -86,8 +101,10 @@ function galleryItem(
   description: string,
   options: {
     category: Exclude<GalleryCategory, 'fav'>
+    simpleOrder?: number
     href?: string
     mediaType?: GalleryMediaType
+    posterUrl?: string
     colors?: GalleryBackgroundColors
     alt?: string
     favorite?: boolean
@@ -101,9 +118,11 @@ function galleryItem(
     title,
     description,
     category: options.category,
+    simpleOrder: options.simpleOrder,
     favorite: options.favorite,
     href: options.href,
     mediaType: options.mediaType,
+    posterUrl: options.posterUrl,
     details: options.details,
     backgroundColors: options.colors ?? bg('#2a2840', '#0a0a0f'),
   }
@@ -165,6 +184,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
  
   galleryItem('18', '/jahia.webp', 'Jahia', 'Intégration front-end et création du site Jahia.', {
     category: 'coding',
+    // simpleOrder: 1,
     favorite: false,
     colors: bg('#0e0053', '#4a3a96', '#057cc3', '#4a3a96'),
     details: {
@@ -181,6 +201,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
   }),
   galleryItem('19', '/videos/peugeot_reduce.webm', 'Peugeot', 'Intégration IHM pour les marques Stellantis.', {
     category: 'coding',
+    simpleOrder: 1,
     favorite: true,
     colors: bg('#612548', '#1c1c38', '#3a6a30', '#84889b'),
     details: {
@@ -197,6 +218,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
   }),
   galleryItem('20', '/videos/4mains_reduce.webm', '4 Mains', 'Mini-documentaire sur une collaboration entre deux chefs.', {
     category: 'films',
+    simpleOrder: 3,
     favorite: true,
     colors: bg('#97010a', '#788a85', '#788a85', '#97010a'),
     details: {
@@ -218,6 +240,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     'Création d’images pour le lancement Airwrap — Dyson France.',
     {
       category: 'films',
+      simpleOrder: 2,
       favorite: true,
       colors: bg('#CC3277', '#A25925', '#CC3277', '#737C82'),
       details: {
@@ -235,6 +258,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
   ),
   galleryItem('22', '/videos/greenhotels-home_reduce.webm', 'Green Hôtels', 'Refonte du site et création des maquettes.', {
     category: 'coding',
+    simpleOrder: 5,
     colors: bg('#bcb6a8', '#020602', '#1D3B27', '#020602'),
     details: {
       year: '2025',
@@ -250,6 +274,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
   }),
   galleryItem('23', '/videos/guerlain-home_reduce.webm', 'Guerlain', 'Évolutions produit, correctifs et refonte sur le site Guerlain.', {
     category: 'coding',
+    simpleOrder: 4,
     favorite: false,
     colors: bg('#750933', '#f3a527', '#C8A97E', '#492f25'),
     details: {
@@ -264,8 +289,9 @@ export const GALLERY_ITEMS: GalleryItem[] = [
         'Intervention sur le site Guerlain : résolution de bugs, livraison de nouvelles features et refonte de pages dans l’esprit premium de la maison. Un travail d’évolution continue, exigeant sur la qualité et la fidélité à la charte.',
     },
   }),
-  galleryItem('26', '/brasserie-placeholder.webp', 'Brasserie', 'Landing scroll — canette 3D et narration au défilement.', {
+  galleryItem('26', '/posters/brasserie.png', 'Brasserie', 'Landing scroll — canette 3D et narration au défilement.', {
     category: 'playground',
+    simpleOrder: 7,
     favorite: false,
     href: '/brasserie',
     colors: bg('#c9a227', '#1a1208', '#e8d5a3', '#0d0906'),
@@ -283,11 +309,12 @@ export const GALLERY_ITEMS: GalleryItem[] = [
   }),
   galleryItem(
     '27',
-    '/quedesnumeros10-placeholder.webp',
+    '/posters/quedesnumeros10.png',
     'FIFA WORLD CUP 2026',
     'Expérience interactive autour du numéro 10 et la Coupe du Monde 2026.',
     {
       category: 'playground',
+      simpleOrder: 8,
       favorite: false,
       href: '/quedesnumeros10',
       colors: bg('#f5c518', '#0a1628', '#1a5f2a', '#051018'),
@@ -306,6 +333,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
   ),
   galleryItem('25', '/videos/drmarteens_reduce.webm', 'Dr. Martens', 'Exploration créative autour de la marque.', {
     category: 'coding',
+    simpleOrder: 9,
     favorite: true,
     colors: bg('#9ec8ee', '#7f2e26', '#1590ff', '#560a0c'),
     details: {

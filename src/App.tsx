@@ -5,9 +5,11 @@ import { AudioPlayer } from './components/AudioPlayer'
 import { GalleryAutoScrollToggle } from './components/GalleryAutoScrollToggle'
 import { GalleryLoader } from './components/GalleryLoader'
 import { ProjectDetail } from './components/ProjectDetail'
+import { SimpleProjectsList } from './components/SimpleProjectsList'
 import {
   GALLERY_ITEMS,
   filterGalleryByCategory,
+  sortGalleryForSimpleList,
   type GalleryBackgroundColors,
   type GalleryCategory,
   type GalleryItem,
@@ -43,6 +45,7 @@ function App() {
     () => filterGalleryByCategory(GALLERY_ITEMS, galleryCategory),
     [galleryCategory],
   )
+  const simpleItems = useMemo(() => sortGalleryForSimpleList(visibleItems), [visibleItems])
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true)
   const [activeItem, setActiveItem] = useState(INITIAL_ITEM)
@@ -80,6 +83,20 @@ function App() {
   }, [])
 
   const handleItemSelect = useCallback((item: GalleryItem) => {
+    if (mode === 'simple') {
+      if (galleryReturnTimer.current) {
+        clearTimeout(galleryReturnTimer.current)
+        galleryReturnTimer.current = null
+      }
+      setGalleryReturning(false)
+      setProjectClosing(false)
+      setSelectedHeroSide('left')
+      setSelectedProject(item)
+      setTransitionItem(null)
+      setCardHovered(false)
+      return
+    }
+
     if (galleryReturnTimer.current) {
       clearTimeout(galleryReturnTimer.current)
       galleryReturnTimer.current = null
@@ -89,7 +106,7 @@ function App() {
     setTransitionItem(item)
     setBackgroundColors(item.backgroundColors)
     setCardHovered(false)
-  }, [])
+  }, [mode])
 
   const handleTransitionComplete = useCallback(
     (meta: ProjectTransitionCompleteMeta) => {
@@ -108,10 +125,18 @@ function App() {
   )
 
   const handleProjectCloseStart = useCallback(() => {
+    if (mode === 'simple') return
     setProjectClosing(true)
-  }, [])
+  }, [mode])
 
   const handleCloseProject = useCallback(() => {
+    if (mode === 'simple') {
+      setSelectedProject(null)
+      setSelectedHeroSide('left')
+      setTransitionItem(null)
+      setCardHovered(false)
+      return
+    }
     setProjectClosing(false)
     setSelectedProject(null)
     setSelectedHeroSide('left')
@@ -124,7 +149,7 @@ function App() {
       galleryReturnTimer.current = null
       setGalleryReturning(false)
     }, GALLERY_RETURN_MS)
-  }, [GALLERY_RETURN_MS])
+  }, [GALLERY_RETURN_MS, mode])
 
   useEffect(() => {
     return () => {
@@ -182,6 +207,13 @@ function App() {
     return () => clearTimeout(id)
   }, [filterLoading, galleryReady])
 
+  useEffect(() => {
+    if (!mountGallery || mode !== 'simple') return
+    setGalleryReady(true)
+    setFilterLoading(false)
+    setFilterLoaderVisible(false)
+  }, [mountGallery, mode])
+
   const preloadFilterModel = useCallback((filterCategory: GalleryCategory | null) => {
     void import('./gallery/preloadCenterModel').then(({ preloadCenterModelForCategory }) => {
       preloadCenterModelForCategory(filterCategory)
@@ -222,29 +254,37 @@ function App() {
         <div
           className={[
             'gallery-stage',
+            mode === 'simple' ? 'gallery-stage--simple' : '',
             projectOpen ? 'gallery-stage--project-hero' : '',
           ]
             .filter(Boolean)
             .join(' ')}
         >
-          <Suspense fallback={null}>
-            <GalleryScene
-              mode={mode}
-              category={galleryCategory}
-              autoScrollEnabled={autoScrollEnabled && !projectOpen}
-              paused={false}
-              projectTransitionItem={transitionItem}
-              onProjectTransitionComplete={handleTransitionComplete}
-              lockedHeroItem={projectOpen ? selectedProject : null}
-              galleryRestoreKey={galleryRestoreKey}
-              onActiveItemChange={handleActiveItemChange}
-              onBackgroundItemChange={handleBackgroundItemChange}
+          {mode === 'simple' ? (
+            <SimpleProjectsList
+              items={simpleItems}
               onItemSelect={handleItemSelect}
-              onCardHoverChange={setCardHovered}
-              onReady={handleGalleryReady}
-              onSettled={handleGallerySettled}
             />
-          </Suspense>
+          ) : (
+            <Suspense fallback={null}>
+              <GalleryScene
+                mode={mode}
+                category={galleryCategory}
+                autoScrollEnabled={autoScrollEnabled && !projectOpen}
+                paused={false}
+                projectTransitionItem={transitionItem}
+                onProjectTransitionComplete={handleTransitionComplete}
+                lockedHeroItem={projectOpen ? selectedProject : null}
+                galleryRestoreKey={galleryRestoreKey}
+                onActiveItemChange={handleActiveItemChange}
+                onBackgroundItemChange={handleBackgroundItemChange}
+                onItemSelect={handleItemSelect}
+                onCardHoverChange={setCardHovered}
+                onReady={handleGalleryReady}
+                onSettled={handleGallerySettled}
+              />
+            </Suspense>
+          )}
         </div>
       ) : null}
 
@@ -253,8 +293,9 @@ function App() {
           item={selectedProject}
           onCloseStart={handleProjectCloseStart}
           onClose={handleCloseProject}
-          use3dHero
-          heroSide={selectedHeroSide}
+          instantClose={mode === 'simple'}
+          use3dHero={mode !== 'simple'}
+          heroSide={mode === 'simple' ? 'left' : selectedHeroSide}
         />
       ) : null}
 
@@ -360,7 +401,7 @@ function App() {
           ))}
         </nav>
 
-        <div className="active-project" aria-live="polite">
+        <div className="active-project" aria-live="polite" hidden={mode === 'simple'}>
           {visibleItems.length === 0 ? (
             <p className="active-project__description">
               Aucun projet dans ce filtre.
