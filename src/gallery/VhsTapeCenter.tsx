@@ -11,6 +11,7 @@ const DEG2RAD = Math.PI / 180
 
 /** Taille max du modèle (m) — calibrée pour le vide au centre de la spirale */
 const TARGET_SIZE = 1.35
+const MODEL_FADE_IN_SECONDS = 2
 
 type VhsTapeCenterProps = {
   offsetRef: RefObject<number>
@@ -88,23 +89,19 @@ function collectMeshMaterials(root: THREE.Object3D): FadeMaterial[] {
   return materials
 }
 
-function restoreMaterial(material: FadeMaterial) {
-  material.transparent = material.userData.origTransparent ?? material.transparent
-  material.opacity = material.userData.origOpacity ?? 1
-  material.depthWrite = material.userData.origDepthWrite ?? true
-}
-
 function applyModelOpacity(materials: FadeMaterial[], opacity: number) {
-  if (opacity >= 0.999) {
-    for (const material of materials) restoreMaterial(material)
-    return
-  }
-
-  const visible = opacity > 0.02
+  const clampedOpacity = THREE.MathUtils.clamp(opacity, 0, 1)
+  const visible = clampedOpacity > 0.02
   for (const material of materials) {
+    const baseOpacity = material.userData.origOpacity ?? 1
+    const baseTransparent = material.userData.origTransparent ?? false
+    const baseDepthWrite = material.userData.origDepthWrite ?? true
+
+    // Keep a stable transparent state during the whole intro fade to avoid
+    // white flashes caused by abrupt transparent/depth-write toggles.
     material.transparent = true
-    material.opacity = opacity
-    material.depthWrite = visible
+    material.opacity = baseOpacity * clampedOpacity
+    material.depthWrite = visible && (baseTransparent ? false : baseDepthWrite)
   }
 }
 
@@ -118,6 +115,7 @@ export function VhsTapeCenter({
   const groupRef = useRef<THREE.Group>(null)
   const innerRef = useRef<THREE.Group>(null)
   const opacityRef = useRef(1)
+  const introFadeRef = useRef(0)
   const spiralCurrent = useRef({
     position: [0, 0, 0] as [number, number, number],
     rotation: [0, 0, 0] as [number, number, number],
@@ -129,6 +127,10 @@ export function VhsTapeCenter({
   useEffect(() => {
     setActiveCenterModel(modelUrl)
   }, [modelUrl])
+
+  useEffect(() => {
+    introFadeRef.current = 0
+  }, [model])
 
   useEffect(() => {
     return () => applyModelOpacity(materials, 1)
@@ -164,11 +166,16 @@ export function VhsTapeCenter({
     )
     inner.scale.setScalar(tuning.scale * responsiveScale)
 
+    introFadeRef.current = Math.min(
+      1,
+      introFadeRef.current + delta / MODEL_FADE_IN_SECONDS,
+    )
+
     const transitionFade =
       transitionRef?.current?.active
         ? getTransitionSceneFade(transitionRef.current)
         : 0
-    opacityRef.current = 1 - transitionFade
+    opacityRef.current = introFadeRef.current * (1 - transitionFade)
 
     inner.visible = opacityRef.current > 0.02
     applyModelOpacity(materials, opacityRef.current)

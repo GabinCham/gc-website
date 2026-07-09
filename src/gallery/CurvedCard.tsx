@@ -47,6 +47,7 @@ const MOBILE_PLANE_SEGMENTS = 12
 
 /** Marge après la sortie de zone avant de repasser au poster. */
 const VIDEO_POSTER_HOLD_MS = 500
+const CARD_FADE_IN_SECONDS = 2
 
 /** useLoader partage une VideoTexture par URL — ref count pour ne pas pause() les autres cartes. */
 const videoPlayRefs = new Map<string, number>()
@@ -152,6 +153,7 @@ function CurvedCardMesh({
   const bendRef = useRef(initialLayout.bendRadius)
   const current = useRef<CardLayout>(initialLayout)
   const hoverAmount = useRef(0)
+  const introFadeRef = useRef(0)
   const pointerDown = useRef<{ x: number; y: number } | null>(null)
   const interactiveRef = useRef(isInteractive)
   const snapOnNextFrameRef = useRef(spiralSlot !== undefined)
@@ -237,6 +239,11 @@ function CurvedCardMesh({
   }
 
   useFrame((_, delta) => {
+    introFadeRef.current = Math.min(
+      1,
+      introFadeRef.current + delta / CARD_FADE_IN_SECONDS,
+    )
+
     const transition = transitionRef?.current
 
     if (transition?.active) {
@@ -300,11 +307,11 @@ function CurvedCardMesh({
     if (!spiralLayout && !heroLock) return
 
     let targetLayout = heroLock?.layout ?? spiralLayout!
-    let cardOpacity = 1
+    let cardOpacity = introFadeRef.current
 
     if (heroLock) {
       targetLayout = heroLock.layout
-      cardOpacity = 1
+      cardOpacity = introFadeRef.current
       interactiveRef.current = false
     } else if (
       transition?.active &&
