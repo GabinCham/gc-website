@@ -325,7 +325,6 @@
     var(--cta-grad-start, #1be356) 16%,
     var(--cta-grad-end, #abff84) 82%
   );
-  /* border: 1px solid color-mix(in srgb, var(--cta-grad-end, #abff84) 78%, #ffffff 22%); */
   border-radius: 999px;
   box-shadow:
     0 10px 22px color-mix(in srgb, var(--cta-glow, #1be356) 38%, transparent),
