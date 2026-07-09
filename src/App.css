@@ -73,6 +73,36 @@
   transform-origin: 50% 42%;
 }
 
+.app--project-open .gallery-stage {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.app--project-closing .gallery-stage {
+  opacity: 0;
+  transform: scale(0.985);
+  filter: saturate(0.96);
+  transition-duration: 0.55s, 0.55s, 0.55s;
+}
+
+.app--gallery-returning .gallery-stage {
+  animation: gallery-stage-return 0.68s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes gallery-stage-return {
+  from {
+    opacity: 0.12;
+    transform: scale(0.985);
+    filter: saturate(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
 .gallery-stage--hidden {
   opacity: 0;
   transform: scale(0.94) translateY(2.5vh);
@@ -281,6 +311,30 @@
 .layout-toggle button:hover,
 .layout-toggle button.active {
   color: #fff;
+}
+
+.layout-toggle button.layout-toggle__fav.active {
+  color: #ff4d6d;
+}
+
+.layout-toggle button.layout-toggle__all.active {
+  color: #8be9fd;
+}
+
+.layout-toggle button.layout-toggle__simple.active {
+  color: #f1fa8c;
+}
+
+.layout-toggle button.layout-toggle__coding.active {
+  color: #50fa7b;
+}
+
+.layout-toggle button.layout-toggle__films.active {
+  color: #bd93f9;
+}
+
+.layout-toggle button.layout-toggle__playground.active {
+  color: #ffb86c;
 }
 
 .layout-toggle__fav {
@@ -582,5 +636,155 @@
   50% { background-position: -20px 50px; }
   75% { background-position: 60px 20px; }
   100% { background-position: 0 0; }
+}
+
+@media (max-width: 768px) {
+  .overlay {
+    padding-top: 1rem;
+  }
+
+  .gallery-autoscroll-toggle {
+    top: 1rem;
+    right: 1rem;
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .site-brand {
+    top: 1rem;
+    left: 1rem;
+    max-width: calc(100vw - 4.5rem);
+    gap: 0.55rem;
+  }
+
+  .site-brand__logo {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+
+  .site-brand__sep {
+    height: 1.1rem;
+  }
+
+  .site-brand__name {
+    font-size: 0.58rem;
+    letter-spacing: 0.09em;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  .layout-toggle {
+    margin-top: 2.85rem;
+    max-width: min(22rem, calc(100vw - 1.2rem));
+    gap: 0.45rem;
+    font-size: 0.84rem;
+    letter-spacing: 0.02em;
+  }
+
+  .layout-toggle__group {
+    gap: 0.45rem;
+  }
+
+  .layout-toggle .sep {
+    display: none;
+  }
+
+  .layout-toggle button {
+    min-height: 2.15rem;
+    padding: 0.42rem 0.62rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.84);
+    line-height: 1;
+    font-weight: 500;
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+
+  .layout-toggle button.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #fff;
+  }
+
+  .layout-toggle button.layout-toggle__fav.active {
+    color: #ff4d6d;
+    border-color: color-mix(in srgb, #ff4d6d 62%, rgba(255, 255, 255, 0.4));
+    background: color-mix(in srgb, #ff4d6d 22%, rgba(255, 255, 255, 0.2));
+  }
+
+  .layout-toggle button.layout-toggle__all.active {
+    color: #8be9fd;
+    border-color: color-mix(in srgb, #8be9fd 62%, rgba(255, 255, 255, 0.4));
+    background: color-mix(in srgb, #8be9fd 22%, rgba(255, 255, 255, 0.2));
+  }
+
+  .layout-toggle button.layout-toggle__simple.active {
+    color: #f1fa8c;
+    border-color: color-mix(in srgb, #f1fa8c 62%, rgba(255, 255, 255, 0.4));
+    background: color-mix(in srgb, #f1fa8c 22%, rgba(255, 255, 255, 0.2));
+  }
+
+  .layout-toggle button.layout-toggle__coding.active {
+    color: #50fa7b;
+    border-color: color-mix(in srgb, #50fa7b 62%, rgba(255, 255, 255, 0.4));
+    background: color-mix(in srgb, #50fa7b 22%, rgba(255, 255, 255, 0.2));
+  }
+
+  .layout-toggle button.layout-toggle__films.active {
+    color: #bd93f9;
+    border-color: color-mix(in srgb, #bd93f9 62%, rgba(255, 255, 255, 0.4));
+    background: color-mix(in srgb, #bd93f9 22%, rgba(255, 255, 255, 0.2));
+  }
+
+  .layout-toggle button.layout-toggle__playground.active {
+    color: #ffb86c;
+    border-color: color-mix(in srgb, #ffb86c 62%, rgba(255, 255, 255, 0.4));
+    background: color-mix(in srgb, #ffb86c 22%, rgba(255, 255, 255, 0.2));
+  }
+
+  .layout-toggle__fav {
+    width: 2.15rem;
+    min-width: 2.15rem;
+    padding: 0;
+  }
+
+  .active-project {
+    margin-bottom: 1.25rem;
+    padding: 0 0.9rem;
+    max-width: calc(100vw - 0.8rem);
+  }
+
+  .active-project__title {
+    font-size: 0.72rem;
+    letter-spacing: 0.11em;
+  }
+
+  .active-project__description {
+    font-size: 0.72rem;
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-brand__name {
+    font-size: 0.52rem;
+    letter-spacing: 0.075em;
+  }
+
+  .layout-toggle {
+    margin-top: 2.75rem;
+    max-width: calc(100vw - 0.8rem);
+    font-size: 0.8rem;
+    gap: 0.38rem;
+  }
+
+  .layout-toggle button {
+    min-height: 2rem;
+    padding: 0.36rem 0.55rem;
+  }
 }
 

@@ -1,6 +1,11 @@
 import equipesData from './equipes.json'
 import { getContrastTextColor, resolveCouleur } from './colors'
 
+export const QDN10_HDR_URL = new URL(
+  '../../../assets/forest_slope_4k.hdr',
+  import.meta.url,
+).href
+
 export const WORLD_CUP_GLB_URL = '/glb/world-cup/world_cup.glb'
 export const TRIONDA_GLB_URL = '/glb/world-cup/trionda.glb'
 

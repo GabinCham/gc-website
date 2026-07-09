@@ -1,6 +1,7 @@
 import { Canvas } from '@react-three/fiber'
 import { Suspense, type RefObject } from 'react'
 import * as THREE from 'three'
+import { Qdn10Environment } from './Qdn10Environment'
 import { Qdn10ScrollModel } from './Qdn10ScrollModel'
 
 type Qdn10ModelStageProps = {
@@ -8,9 +9,14 @@ type Qdn10ModelStageProps = {
   scrollProgressRef: RefObject<number>
   className?: string
   targetSize?: number
+  withEnvironment?: boolean
 }
 
-function Qdn10Lights() {
+function Qdn10Lights({ withEnvironment }: { withEnvironment: boolean }) {
+  if (withEnvironment) {
+    return <ambientLight intensity={0.35} />
+  }
+
   return (
     <>
       <ambientLight intensity={0.65} />
@@ -25,6 +31,7 @@ export function Qdn10ModelStage({
   scrollProgressRef,
   className,
   targetSize,
+  withEnvironment = false,
 }: Qdn10ModelStageProps) {
   return (
     <div className={className} aria-hidden>
@@ -39,12 +46,13 @@ export function Qdn10ModelStage({
         onCreated={({ gl }) => {
           gl.setClearColor(0x000000, 0)
           gl.toneMapping = THREE.ACESFilmicToneMapping
-          gl.toneMappingExposure = 1.05
+          gl.toneMappingExposure = withEnvironment ? 1.1 : 1.05
         }}
         dpr={[1, 1.75]}
       >
-        <Qdn10Lights />
+        <Qdn10Lights withEnvironment={withEnvironment} />
         <Suspense fallback={null}>
+          {withEnvironment ? <Qdn10Environment /> : null}
           <Qdn10ScrollModel
             url={url}
             scrollProgressRef={scrollProgressRef}
@@ -54,4 +62,8 @@ export function Qdn10ModelStage({
       </Canvas>
     </div>
   )
+}
+
+Qdn10ModelStage.preloadEnvironment = () => {
+  Qdn10Environment.preload()
 }

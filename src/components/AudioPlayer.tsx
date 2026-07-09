@@ -7,6 +7,7 @@ import {
 } from '../gallery/galleryScrollSpeed'
 
 const PLAYBACK_RATE_SMOOTH = 0.22
+const START_AT_SECONDS = 30
 
 const BAR_COUNT = 48
 
@@ -194,6 +195,7 @@ export function AudioPlayer({
     audio.preservesPitch = true
 
     const start = () => {
+      audio.currentTime = START_AT_SECONDS
       audio.play().then(() => setPlaying(true)).catch(() => {})
     }
 

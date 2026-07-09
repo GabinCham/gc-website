@@ -10,6 +10,10 @@ export const ANIM_CAN_CONFIG = {
   extension: 'png',
   /** Distance de scroll (vh) pour parcourir toute la séquence */
   scrollVh: 280,
+  /** Lecture auto de la séquence à l'entrée de la section */
+  autoPlay: true,
+  /** Durée (ms) pour lire toute la séquence automatiquement */
+  autoPlayDurationMs: 3800,
   /** Progression PNG (0–1) à laquelle le liquide commence à monter */
   liquidStartAt: 0.8,
   /** Scroll une fois l’écran rempli, avant de reboucler */

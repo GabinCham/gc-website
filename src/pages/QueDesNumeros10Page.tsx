@@ -1,5 +1,6 @@
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useSyncExternalStore, type CSSProperties } from 'react'
 import { useLoader } from '@react-three/fiber'
+import { WorldCupComposeTuningPanel } from '../components/WorldCupComposeTuningPanel'
 import {
   EQUIPES,
   QDN10_GLB_URLS,
@@ -8,6 +9,12 @@ import {
   WORLD_CUP_GLB_URL,
 } from './quedesnumeros10/content'
 import { Qdn10ModelStage } from './quedesnumeros10/Qdn10ModelStage'
+import { WORLD_CUP_COMPOSE_CONFIG } from './quedesnumeros10/world-cup-compose.config'
+import {
+  getWorldCupComposeTuningSnapshot,
+  subscribeWorldCupComposeTuning,
+  WORLD_CUP_COMPOSE_TUNING,
+} from './quedesnumeros10/worldCupComposeTuning'
 import { useQueDesNumeros10Scroll } from './quedesnumeros10/useQueDesNumeros10Scroll'
 import { GalleryGLTFLoader } from '../gallery/galleryGltfLoader'
 import './QueDesNumeros10Page.css'
@@ -23,10 +30,17 @@ export function QueDesNumeros10Page() {
 
   const equipe = EQUIPES[activeEquipeIndex]!
 
+  const composeTuning = useSyncExternalStore(
+    subscribeWorldCupComposeTuning,
+    getWorldCupComposeTuningSnapshot,
+    () => WORLD_CUP_COMPOSE_TUNING,
+  )
+
   useEffect(() => {
     for (const url of QDN10_GLB_URLS) {
       useLoader.preload(GalleryGLTFLoader, url)
     }
+    Qdn10ModelStage.preloadEnvironment()
   }, [])
 
   return (
@@ -41,14 +55,36 @@ export function QueDesNumeros10Page() {
           ← Portfolio
         </a>
 
-        <Suspense fallback={null}>
-          <Qdn10ModelStage
-            className="qdn10-page__stage qdn10-page__stage--top"
-            url={WORLD_CUP_GLB_URL}
-            scrollProgressRef={scrollProgressRef}
-            targetSize={2.1}
+        <div
+          className="qdn10-page__world-cup-compose"
+          style={
+            {
+              '--qdn10-logo-x': WORLD_CUP_COMPOSE_CONFIG.logo.x,
+              '--qdn10-logo-y': WORLD_CUP_COMPOSE_CONFIG.logo.y,
+              '--qdn10-logo-scale': WORLD_CUP_COMPOSE_CONFIG.logo.scale,
+              '--qdn10-coupe-x': `${composeTuning.coupe.x}px`,
+              '--qdn10-coupe-y': `${composeTuning.coupe.y}px`,
+              '--qdn10-coupe-scale': composeTuning.coupe.scale,
+            } as CSSProperties
+          }
+          aria-hidden
+        >
+          <img
+            className="qdn10-page__world-cup-logo"
+            src={WORLD_CUP_COMPOSE_CONFIG.logoUrl}
+            alt=""
+            draggable={false}
           />
-        </Suspense>
+          <Suspense fallback={null}>
+            <Qdn10ModelStage
+              className="qdn10-page__world-cup-model"
+              url={WORLD_CUP_GLB_URL}
+              scrollProgressRef={scrollProgressRef}
+              targetSize={2.1}
+              withEnvironment
+            />
+          </Suspense>
+        </div>
 
         <p
           key={`country-${activeEquipeIndex}`}
@@ -116,6 +152,8 @@ export function QueDesNumeros10Page() {
         style={{ height: `${QDN10_SCROLL_SECTIONS * 100}vh` }}
         aria-hidden
       />
+
+      <WorldCupComposeTuningPanel />
     </div>
   )
 }

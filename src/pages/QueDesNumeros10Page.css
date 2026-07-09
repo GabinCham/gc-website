@@ -119,8 +119,38 @@
   pointer-events: none;
 }
 
-.qdn10-page__stage--top {
+.qdn10-page__world-cup-compose {
+  position: absolute;
   top: clamp(3.25rem, 7vh, 4.5rem);
+  left: 50%;
+  z-index: 1;
+  width: clamp(4.5rem, 15vw, 8.5rem);
+  aspect-ratio: 412.75 / 636.8;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.qdn10-page__world-cup-logo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: translate(var(--qdn10-logo-x, 0px), var(--qdn10-logo-y, 0px))
+    scale(var(--qdn10-logo-scale, 1));
+  transform-origin: center center;
+}
+
+.qdn10-page__world-cup-model {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  transform: translate(var(--qdn10-coupe-x, 0px), var(--qdn10-coupe-y, 0px))
+    scale(var(--qdn10-coupe-scale, 1));
+  transform-origin: center center;
 }
 
 .qdn10-page__stage--bottom {
@@ -299,4 +329,163 @@
   .qdn10-page__hint {
     bottom: clamp(9rem, 22vh, 11rem);
   }
+}
+
+.qdn10-compose-tuning-toggle {
+  position: fixed;
+  bottom: 1.75rem;
+  left: 1.75rem;
+  z-index: 10;
+  padding: 0.45rem 0.85rem;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.qdn10-compose-tuning-toggle:hover,
+.qdn10-compose-tuning-toggle[aria-expanded='true'] {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.qdn10-compose-tuning {
+  position: fixed;
+  bottom: 4.5rem;
+  left: 1.75rem;
+  z-index: 20;
+  width: min(18.5rem, calc(100vw - 2.5rem));
+  max-height: min(70vh, 28rem);
+  overflow: auto;
+  padding: 1rem 1rem 0.85rem;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(8, 8, 10, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+
+.qdn10-compose-tuning__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.qdn10-compose-tuning__title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.qdn10-compose-tuning__close {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.qdn10-compose-tuning__close:hover {
+  color: #fff;
+}
+
+.qdn10-compose-tuning__section {
+  margin: 0.65rem 0 0.35rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.qdn10-compose-tuning__row {
+  display: grid;
+  grid-template-columns: 1.1rem 1fr 3.2rem 1.4rem;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+  cursor: pointer;
+}
+
+.qdn10-compose-tuning__row-label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.qdn10-compose-tuning__range {
+  width: 100%;
+  accent-color: rgba(255, 255, 255, 0.75);
+}
+
+.qdn10-compose-tuning__number {
+  width: 100%;
+  padding: 0.15rem 0.25rem;
+  font: inherit;
+  font-size: 0.62rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.qdn10-compose-tuning__unit {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.58rem;
+}
+
+.qdn10-compose-tuning__footer {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.qdn10-compose-tuning__footer button {
+  flex: 1;
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.qdn10-compose-tuning__footer button:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.qdn10-compose-tuning__hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.58rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.qdn10-compose-tuning__hint code {
+  color: rgba(255, 255, 255, 0.5);
 }

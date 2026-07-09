@@ -152,6 +152,11 @@ export function useScrollImageSequence({
     let raf = 0
     let loopLocked = false
     let fadeTimer = 0
+    let autoPlayActive = false
+    let autoPlayCompleted = false
+    let autoPlayStartTime = 0
+    let autoPlayStartScrollTop = 0
+    let autoPlayTargetScrollTop = 0
 
     const getImageProgress = () => {
       const scrollDistance = trackEl.offsetHeight
@@ -174,6 +179,42 @@ export function useScrollImageSequence({
         trackEl.offsetHeight -
         holdTrackEl.offsetHeight
       return clamp(loopScroll / loopDistance, 0, 1)
+    }
+
+    const maybeResetAutoPlay = () => {
+      const scrollWithinSection = getScrollWithinSection(scrollEl, sectionEl)
+      if (scrollWithinSection < -scrollEl.clientHeight * 0.85) {
+        autoPlayActive = false
+        autoPlayCompleted = false
+      }
+    }
+
+    const maybeStartAutoPlay = (now: number) => {
+      if (!ANIM_CAN_CONFIG.autoPlay || autoPlayActive || autoPlayCompleted) return
+
+      const scrollWithinSection = getScrollWithinSection(scrollEl, sectionEl)
+      if (scrollWithinSection < 0) return
+
+      autoPlayActive = true
+      autoPlayStartTime = now
+      autoPlayStartScrollTop = scrollEl.scrollTop
+      autoPlayTargetScrollTop = sectionEl.offsetTop + trackEl.offsetHeight
+    }
+
+    const updateAutoPlay = (now: number) => {
+      if (!autoPlayActive) return
+
+      const duration = Math.max(ANIM_CAN_CONFIG.autoPlayDurationMs, 200)
+      const progress = clamp((now - autoPlayStartTime) / duration, 0, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      scrollEl.scrollTop =
+        autoPlayStartScrollTop +
+        (autoPlayTargetScrollTop - autoPlayStartScrollTop) * eased
+
+      if (progress >= 1) {
+        autoPlayActive = false
+        autoPlayCompleted = true
+      }
     }
 
     const runLoopReset = () => {
@@ -220,6 +261,13 @@ export function useScrollImageSequence({
       }
     }
 
+    const maybeAutoTriggerLoop = (fillProgress: number) => {
+      if (!ANIM_CAN_CONFIG.autoPlay || loopLocked || !autoPlayCompleted) return
+      if (fillProgress >= 1) {
+        runLoopReset()
+      }
+    }
+
     const renderFrame = (imageProgress: number, fillProgress: number) => {
       const nextFrame = Math.min(
         frameUrls.length - 1,
@@ -237,10 +285,16 @@ export function useScrollImageSequence({
       }
     }
 
-    const render = () => {
+    const render = (now: number) => {
       resizeCanvas(canvas)
+      maybeResetAutoPlay()
+      maybeStartAutoPlay(now)
+      updateAutoPlay(now)
+      const imageProgress = getImageProgress()
+      const fillProgress = getFillProgress()
       maybeTriggerLoop()
-      renderFrame(getImageProgress(), getFillProgress())
+      maybeAutoTriggerLoop(fillProgress)
+      renderFrame(imageProgress, fillProgress)
       raf = requestAnimationFrame(render)
     }
 

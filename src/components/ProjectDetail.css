@@ -1,4 +1,7 @@
 .project-detail {
+  --project-accent: #d9dce2;
+  --project-glow: #5a6476;
+  --project-base: #060608;
   position: fixed;
   inset: 0;
   z-index: 12;
@@ -221,6 +224,7 @@
   transform: translateY(18px) scale(0.98);
   filter: blur(8px);
   transition-duration: 0.55s;
+  transition-delay: 0s;
 }
 
 .project-detail__media {
@@ -386,7 +390,8 @@
   opacity: 0;
   transform: translateY(12px);
   filter: blur(4px);
-  transition-duration: 0.45s;
+  transition-duration: 0.55s;
+  transition-delay: 0s;
 }
 
 @media (max-width: 900px) {

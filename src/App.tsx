@@ -1,10 +1,9 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppBackground } from './components/AppBackground'
-// import { AudioPlayer } from './components/AudioPlayer' // temporairement retiré pour le dev
+import { AudioPlayer } from './components/AudioPlayer'
 import { GalleryAutoScrollToggle } from './components/GalleryAutoScrollToggle'
 import { GalleryLoader } from './components/GalleryLoader'
 import { ProjectDetail } from './components/ProjectDetail'
-import { VhsTuningPanel } from './components/VhsTuningPanel'
 import {
   GALLERY_ITEMS,
   filterGalleryByCategory,
@@ -28,6 +27,7 @@ const FAVORITE_ITEMS = filterGalleryByCategory(GALLERY_ITEMS, DEFAULT_CATEGORY)
 const INITIAL_ITEM = FAVORITE_ITEMS[0] ?? GALLERY_ITEMS[0]!
 
 function App() {
+  const GALLERY_RETURN_MS = 680
   const mountGallery = useIdleMount()
   const [galleryReady, setGalleryReady] = useState(false)
   const [filterLoading, setFilterLoading] = useState(false)
@@ -55,6 +55,9 @@ function App() {
   const [selectedProject, setSelectedProject] = useState<GalleryItem | null>(null)
   const [selectedHeroSide, setSelectedHeroSide] = useState<HeroSide>('left')
   const [galleryRestoreKey, setGalleryRestoreKey] = useState(0)
+  const [projectClosing, setProjectClosing] = useState(false)
+  const [galleryReturning, setGalleryReturning] = useState(false)
+  const galleryReturnTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleActiveItemChange = useCallback((item: GalleryItem) => {
     setActiveItem(item)
@@ -75,6 +78,12 @@ function App() {
   }, [])
 
   const handleItemSelect = useCallback((item: GalleryItem) => {
+    if (galleryReturnTimer.current) {
+      clearTimeout(galleryReturnTimer.current)
+      galleryReturnTimer.current = null
+    }
+    setGalleryReturning(false)
+    setProjectClosing(false)
     setTransitionItem(item)
     setBackgroundColors(item.backgroundColors)
     setCardHovered(false)
@@ -84,18 +93,41 @@ function App() {
     (meta: ProjectTransitionCompleteMeta) => {
       const item = transitionItemRef.current
       if (item) setSelectedProject(item)
+      if (galleryReturnTimer.current) {
+        clearTimeout(galleryReturnTimer.current)
+        galleryReturnTimer.current = null
+      }
+      setGalleryReturning(false)
+      setProjectClosing(false)
       setSelectedHeroSide(meta.heroSide)
       setTransitionItem(null)
     },
     [],
   )
 
+  const handleProjectCloseStart = useCallback(() => {
+    setProjectClosing(true)
+  }, [])
+
   const handleCloseProject = useCallback(() => {
+    setProjectClosing(false)
     setSelectedProject(null)
     setSelectedHeroSide('left')
     setTransitionItem(null)
     setCardHovered(false)
     setGalleryRestoreKey((key) => key + 1)
+    setGalleryReturning(true)
+    if (galleryReturnTimer.current) clearTimeout(galleryReturnTimer.current)
+    galleryReturnTimer.current = setTimeout(() => {
+      galleryReturnTimer.current = null
+      setGalleryReturning(false)
+    }, GALLERY_RETURN_MS)
+  }, [GALLERY_RETURN_MS])
+
+  useEffect(() => {
+    return () => {
+      if (galleryReturnTimer.current) clearTimeout(galleryReturnTimer.current)
+    }
   }, [])
 
   const handleGalleryReady = useCallback(() => {
@@ -138,7 +170,8 @@ function App() {
 
   const projectTransitioning = transitionItem !== null
   const projectOpen = selectedProject !== null
-  const galleryPaused = projectTransitioning || projectOpen
+  const galleryPaused =
+    projectTransitioning || projectOpen || projectClosing || galleryReturning
 
   return (
     <div
@@ -146,6 +179,8 @@ function App() {
         'app',
         projectTransitioning ? 'app--project-transition' : '',
         projectOpen ? 'app--project-open' : '',
+        projectClosing ? 'app--project-closing' : '',
+        galleryReturning ? 'app--gallery-returning' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -191,6 +226,7 @@ function App() {
       {selectedProject ? (
         <ProjectDetail
           item={selectedProject}
+          onCloseStart={handleProjectCloseStart}
           onClose={handleCloseProject}
           use3dHero
           heroSide={selectedHeroSide}
@@ -251,7 +287,7 @@ function App() {
           </span>
           <button
             type="button"
-            className={mode === 'all' && category === null ? 'active' : ''}
+            className={`layout-toggle__all${mode === 'all' && category === null ? ' active' : ''}`}
             onClick={() => {
               setMode('all')
               setCategory(null)
@@ -266,7 +302,7 @@ function App() {
           </span>
           <button
             type="button"
-            className={mode === 'simple' ? 'active' : ''}
+            className={`layout-toggle__simple${mode === 'simple' ? ' active' : ''}`}
             onClick={selectSimple}
           >
             simple
@@ -278,9 +314,9 @@ function App() {
               </span>
               <button
                 type="button"
-                className={
-                  mode === 'all' && category === filter ? 'active' : ''
-                }
+                className={`layout-toggle__${filter}${
+                  mode === 'all' && category === filter ? ' active' : ''
+                }`}
                 onClick={() => selectCategory(filter)}
                 onMouseEnter={() => preloadFilterModel(filter)}
                 onFocus={() => preloadFilterModel(filter)}
@@ -307,16 +343,11 @@ function App() {
         </div>
       </header>
 
-      {/* <AudioPlayer
-        src={SITE_TRACK}
+      <AudioPlayer
         syncPlaybackToScroll={mode === 'all'}
-      /> 
-      
-      temporairement retiré pour le dev
-      
-      */}
+      />
 
-      {mode === 'all' && !galleryPaused ? <VhsTuningPanel /> : null}
+      {/* {mode === 'all' && !galleryPaused ? <VhsTuningPanel /> : null} */}
     </div>
   )
 }

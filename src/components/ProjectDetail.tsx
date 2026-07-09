@@ -3,7 +3,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type CSSProperties,
 } from 'react'
 import {
   getGalleryCategoryLabel,
@@ -17,6 +16,7 @@ import type { HeroSide } from '../gallery/projectTransition'
 type ProjectDetailProps = {
   item: GalleryItem
   onClose: () => void
+  onCloseStart?: () => void
   /** La carte hero reste la mesh 3D visible derrière le layout. */
   use3dHero?: boolean
   /** Côté de la carte hero (texte de l'autre côté). */
@@ -56,6 +56,7 @@ function ProjectMedia({ item }: { item: GalleryItem }) {
 export function ProjectDetail({
   item,
   onClose,
+  onCloseStart,
   use3dHero = false,
   heroSide = 'left',
 }: ProjectDetailProps) {
@@ -63,9 +64,6 @@ export function ProjectDetail({
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const details = item.details
-  const accent = item.backgroundColors.accent
-  const glow = item.backgroundColors.glow ?? accent
-  const base = item.backgroundColors.base
   const categoryLabel = getGalleryCategoryLabel(item.category)
   const lead =
     details?.longDescription ?? item.description
@@ -79,13 +77,14 @@ export function ProjectDetail({
 
   const handleClose = useCallback(() => {
     if (phase === 'leave') return
+    onCloseStart?.()
     setPhase('leave')
     if (closeTimer.current) clearTimeout(closeTimer.current)
     closeTimer.current = setTimeout(() => {
       closeTimer.current = null
       onClose()
     }, CLOSE_MS)
-  }, [onClose, phase])
+  }, [onClose, onCloseStart, phase])
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setPhase('open'))
@@ -119,13 +118,6 @@ export function ProjectDetail({
       role="dialog"
       aria-modal="true"
       aria-label={item.title}
-      style={
-        {
-          '--project-accent': accent,
-          '--project-glow': glow,
-          '--project-base': base,
-        } as CSSProperties
-      }
     >
       <div className="project-detail__backdrop" aria-hidden />
 
