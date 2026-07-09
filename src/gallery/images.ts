@@ -110,8 +110,8 @@ function galleryItem(
 }
 
 const CATEGORY_LABELS: Record<Exclude<GalleryCategory, 'fav'>, string> = {
-  coding: 'Digital',
-  films: 'Film & motion',
+  coding: 'Développement',
+  films: 'Film',
   playground: 'Playground',
 }
 
@@ -168,7 +168,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     favorite: false,
     colors: bg('#0e0053', '#4a3a96', '#057cc3', '#4a3a96'),
     details: {
-      year: '2024',
+      year: '2024 - 2025',
       role: 'Intégration front-end · Création du site',
       highlights: [
         'Développement et intégration du site complet',
@@ -184,7 +184,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     favorite: true,
     colors: bg('#612548', '#1c1c38', '#3a6a30', '#84889b'),
     details: {
-      year: '2023',
+      year: '2022 - 2023',
       role: 'Intégration IHM · Pixel perfect',
       highlights: [
         'Interfaces pour Peugeot, DS, Citroën, Jeep et Opel',
@@ -200,7 +200,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     favorite: true,
     colors: bg('#97010a', '#788a85', '#788a85', '#97010a'),
     details: {
-      year: '2023',
+      year: '2026',
       role: 'Réalisation · Film documentaire',
       highlights: [
         'Immersion dans les coulisses d’une collaboration artistique',
@@ -208,7 +208,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
         'Format court, rythme sensible et authentique',
       ],
       longDescription:
-        'Réalisation d’un mini-documentaire qui suit les coulisses d’une collaboration entre deux chefs. Un regard intime sur le processus créatif, la matière et l’échange — loin du plat fini, au plus près du faire.',
+        'Réalisation d’un mini-documentaire qui suit les coulisses d’une collaboration entre deux chefs. Un regard intime sur le processus créatif, la matière et l’échange.',
     },
   }),
   galleryItem(
@@ -221,7 +221,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
       favorite: true,
       colors: bg('#CC3277', '#A25925', '#CC3277', '#737C82'),
       details: {
-        year: '2024',
+        year: '2023',
         role: 'Direction artistique · Production visuelle',
         highlights: [
           'Visuels pour le nouveau Dyson Airwrap',
@@ -233,11 +233,11 @@ export const GALLERY_ITEMS: GalleryItem[] = [
       },
     },
   ),
-  galleryItem('22', '/videos/greenhotels-home_reduce.webm', 'Green Hotels', 'Refonte du site et création des maquettes.', {
+  galleryItem('22', '/videos/greenhotels-home_reduce.webm', 'Green Hôtels', 'Refonte du site et création des maquettes.', {
     category: 'coding',
     colors: bg('#bcb6a8', '#020602', '#1D3B27', '#020602'),
     details: {
-      year: '2023',
+      year: '2025',
       role: 'Design · Développement front-end',
       highlights: [
         'Conception des maquettes et de l’expérience utilisateur',
@@ -245,7 +245,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
         'Univers visuel aligné sur l’hospitalité durable',
       ],
       longDescription:
-        'Refonte complète de la présence digitale Green Hotels : création des maquettes, définition des parcours, puis développement du site. Un projet qui lie design et intégration pour porter une marque engagée et accueillante.',
+        'Refonte complète de la présence digitale Green Hôtels : création des maquettes, définition des parcours, puis développement du site. Un projet qui lie design et intégration pour porter une marque engagée et accueillante.',
     },
   }),
   galleryItem('23', '/videos/guerlain-home_reduce.webm', 'Guerlain', 'Évolutions produit, correctifs et refonte sur le site Guerlain.', {
@@ -253,7 +253,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     favorite: false,
     colors: bg('#750933', '#f3a527', '#C8A97E', '#492f25'),
     details: {
-      year: '2024',
+      year: '2025 - 2026',
       role: 'Front-end · Maintenance & évolutions',
       highlights: [
         'Correction de bugs et stabilisation du site',
@@ -295,29 +295,29 @@ export const GALLERY_ITEMS: GalleryItem[] = [
         year: '2026',
         role: 'Front-end · Playground · Interaction',
         highlights: [
-          'Exploration des numéros 10 emblématiques de la Coupe du Monde',
+          'Exploration des numéros 10 de la Coupe du Monde 2026',
           'Interface ludique autour de la compétition 2026',
-          'Expérience web dédiée, hors galerie',
+          'Expérience web dédiée',
         ],
         longDescription:
-          'Playground autour de la FIFA World Cup 2026 : une expérience interactive qui met en lumière le mythique numéro 10 — joueurs, maillots et moments de légende — dans l’attente de la prochaine édition.',
+          'Playground autour de la FIFA World Cup 2026 : une expérience interactive qui met en lumière le mythique numéro 10 — joueurs, maillots et moments de légende.',
       },
     },
   ),
-  galleryItem('25', '/videos/drmarteens_reduce.webm', 'Dr. Martens', 'Projet personnel — exploration créative autour de la marque.', {
+  galleryItem('25', '/videos/drmarteens_reduce.webm', 'Dr. Martens', 'Exploration créative autour de la marque.', {
     category: 'coding',
     favorite: true,
     colors: bg('#9ec8ee', '#7f2e26', '#1590ff', '#560a0c'),
     details: {
-      year: '2024',
-      role: 'Projet personnel · Direction créative',
+      year: '2026',
+      role: 'Playground · Direction créative',
       highlights: [
         'Concept libre, réalisé pour le plaisir',
         'Exploration graphique de l’univers Dr. Martens',
         'Mise en scène de l’icône sans contrainte client',
       ],
       longDescription:
-        'Un projet fait sur le temps libre, pour le kiff : une exploration créative autour de Dr. Martens, entre héritage punk et mise en scène contemporaine. L’occasion d’expérimenter sans brief, avec liberté totale.',
+        'Une exploration créative autour de Dr. Martens, entre héritage punk et mise en scène contemporaine. L’occasion d’expérimenter sans brief, avec liberté totale.',
     },
   }),
 ]
