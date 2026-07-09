@@ -1,4 +1,5 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { gsap } from 'gsap'
 import { AppBackground } from './components/AppBackground'
 import { AudioPlayer } from './components/AudioPlayer'
 import { GalleryAutoScrollToggle } from './components/GalleryAutoScrollToggle'
@@ -58,6 +59,7 @@ function App() {
   const [projectClosing, setProjectClosing] = useState(false)
   const [galleryReturning, setGalleryReturning] = useState(false)
   const galleryReturnTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const layoutToggleRef = useRef<HTMLElement>(null)
 
   const handleActiveItemChange = useCallback((item: GalleryItem) => {
     setActiveItem(item)
@@ -127,6 +129,29 @@ function App() {
   useEffect(() => {
     return () => {
       if (galleryReturnTimer.current) clearTimeout(galleryReturnTimer.current)
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const root = layoutToggleRef.current
+    if (!root) return
+
+    const menuItems = root.querySelectorAll<HTMLElement>('[data-menu-anim]')
+    if (menuItems.length === 0) return
+
+    const animation = gsap.from(menuItems, {
+      y: -90,
+      opacity: 0,
+      rotation: () => gsap.utils.random(-26, 26),
+      stagger: 0.07,
+      duration: 0.95,
+      ease: 'back.out(1.45)',
+      clearProps: 'transform,opacity',
+    })
+
+    return () => {
+      animation.kill()
     }
   }, [])
 
@@ -257,12 +282,17 @@ function App() {
           </p>
         </div>
 
-        <nav className="layout-toggle" aria-label="Affichage et filtres">
+        <nav
+          ref={layoutToggleRef}
+          className="layout-toggle"
+          aria-label="Affichage et filtres"
+        >
           <button
             type="button"
             className={`layout-toggle__fav${
               mode === 'all' && category === 'fav' ? ' active' : ''
             }`}
+            data-menu-anim
             onClick={() => selectCategory('fav')}
             onMouseEnter={() => preloadFilterModel('fav')}
             onFocus={() => preloadFilterModel('fav')}
@@ -282,12 +312,13 @@ function App() {
               />
             </svg>
           </button>
-          <span className="sep" aria-hidden>
+          <span className="sep" aria-hidden data-menu-anim>
             •
           </span>
           <button
             type="button"
             className={`layout-toggle__all${mode === 'all' && category === null ? ' active' : ''}`}
+            data-menu-anim
             onClick={() => {
               setMode('all')
               setCategory(null)
@@ -297,19 +328,20 @@ function App() {
           >
             all
           </button>
-          <span className="sep" aria-hidden>
+          <span className="sep" aria-hidden data-menu-anim>
             •
           </span>
           <button
             type="button"
             className={`layout-toggle__simple${mode === 'simple' ? ' active' : ''}`}
+            data-menu-anim
             onClick={selectSimple}
           >
             simple
           </button>
           {CATEGORY_FILTERS.map((filter) => (
             <span key={filter} className="layout-toggle__group">
-              <span className="sep" aria-hidden>
+              <span className="sep" aria-hidden data-menu-anim>
                 •
               </span>
               <button
@@ -317,6 +349,7 @@ function App() {
                 className={`layout-toggle__${filter}${
                   mode === 'all' && category === filter ? ' active' : ''
                 }`}
+                data-menu-anim
                 onClick={() => selectCategory(filter)}
                 onMouseEnter={() => preloadFilterModel(filter)}
                 onFocus={() => preloadFilterModel(filter)}

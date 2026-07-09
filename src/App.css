@@ -293,6 +293,11 @@
   text-transform: lowercase;
 }
 
+.layout-toggle [data-menu-anim] {
+  will-change: transform, opacity;
+  transform-origin: 50% 50%;
+}
+
 .layout-toggle__group {
   display: inline-flex;
   align-items: center;
