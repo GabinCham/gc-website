@@ -79,6 +79,7 @@ export function ProjectDetail({
   const ctaLabelRef = useRef<HTMLSpanElement | null>(null)
 
   const details = item.details
+  const ctaHref = item.href ?? item.url ?? ''
   const categoryLabel = getGalleryCategoryLabel(item.category)
   const lead =
     details?.longDescription ?? item.description
@@ -273,22 +274,18 @@ export function ProjectDetail({
             <a
               ref={ctaRef}
               className="project-detail__cta"
-              href={item.href ?? ''}
+              href={ctaHref}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={(event) => {
-                if (!item.href) event.preventDefault()
+                if (!ctaHref) event.preventDefault()
               }}
-              {...(!item.href || item.href.startsWith('/')
-                ? {}
-                : {
-                    target: '_blank',
-                    rel: 'noopener noreferrer',
-                  })}
             >
               <span ref={ctaLabelRef} className="project-detail__cta-label">
                 Voir le projet
               </span>
               <span className="project-detail__cta-arrow" aria-hidden>
-                {!item.href || item.href.startsWith('/') ? '→' : '↗'}
+                {!ctaHref || ctaHref.startsWith('/') ? '→' : '↗'}
               </span>
             </a>
           </div>

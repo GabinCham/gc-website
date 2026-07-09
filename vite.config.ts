@@ -9,6 +9,11 @@ export default defineConfig({
     modulePreload: false,
     rollupOptions: {
       output: {
+        // Keep stable filenames to avoid transient HTML/assets mismatch
+        // during GitHub Pages CDN propagation.
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name][extname]',
         manualChunks(id) {
           if (
             id.includes('node_modules/react/jsx-runtime') ||

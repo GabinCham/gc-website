@@ -184,6 +184,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
  
   galleryItem('18', '/jahia.webp', 'Jahia', 'Intégration front-end et création du site Jahia.', {
     category: 'coding',
+    href: 'https://www.jahia.com/fr',
     // simpleOrder: 1,
     favorite: false,
     colors: bg('#0e0053', '#4a3a96', '#057cc3', '#4a3a96'),
@@ -202,6 +203,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
   galleryItem('19', '/videos/peugeot_reduce.webm', 'Peugeot', 'Intégration IHM pour les marques Stellantis.', {
     category: 'coding',
     simpleOrder: 1,
+    href: 'https://www.peugeot.fr/nos-vehicules/peugeot-3008/electrique.html',
     favorite: true,
     colors: bg('#612548', '#1c1c38', '#3a6a30', '#84889b'),
     details: {
@@ -241,6 +243,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     {
       category: 'films',
       simpleOrder: 2,
+      href: 'https://vimeo.com/940734425',
       favorite: true,
       colors: bg('#CC3277', '#A25925', '#CC3277', '#737C82'),
       details: {
@@ -259,6 +262,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
   galleryItem('22', '/videos/greenhotels-home_reduce.webm', 'Green Hôtels', 'Refonte du site et création des maquettes.', {
     category: 'coding',
     simpleOrder: 5,
+    href: 'https://greenhotels.fr/',
     colors: bg('#bcb6a8', '#020602', '#1D3B27', '#020602'),
     details: {
       year: '2025',
@@ -276,6 +280,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     category: 'coding',
     simpleOrder: 4,
     favorite: false,
+    href: 'https://www.guerlain.com/fr/fr-fr',
     colors: bg('#750933', '#f3a527', '#C8A97E', '#492f25'),
     details: {
       year: '2025 - 2026',
@@ -335,6 +340,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     category: 'coding',
     simpleOrder: 9,
     favorite: true,
+    href: '/marteens',
     colors: bg('#9ec8ee', '#7f2e26', '#1590ff', '#560a0c'),
     details: {
       year: '2026',
