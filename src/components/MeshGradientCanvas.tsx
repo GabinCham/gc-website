@@ -246,7 +246,7 @@ export function MeshGradientCanvas({
     let height = 0
     let frameId = 0
     let start = performance.now()
-    let visible = !document.hidden
+    let running = false
     let reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     const maxDpr = reduced ? 1 : 1.5
@@ -265,14 +265,10 @@ export function MeshGradientCanvas({
       gl.viewport(0, 0, width, height)
     }
 
-    const render = (now: number) => {
-      frameId = requestAnimationFrame(render)
-      if (!visible) return
-
-      if (reduced) {
-        frameSkip += 1
-        if (frameSkip % 2 !== 0) return
-      }
+    const drawFrame = (now: number) => {
+      frameSkip += 1
+      const skipMod = reduced ? 2 : 4
+      if (frameSkip % skipMod !== 0) return
 
       const { accent, glow, base, deep } = colorsRef.current
       const elapsed = reducedMotion ? 0 : (now - start) * 0.001
@@ -286,28 +282,41 @@ export function MeshGradientCanvas({
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
     }
 
-    const onVisibility = () => {
-      visible = !document.hidden
-      if (visible) start = performance.now()
+    const scheduleFrame = () => {
+      if (running) return
+      running = true
+      frameId = requestAnimationFrame(render)
+    }
+
+    const stopLoop = () => {
+      running = false
+      cancelAnimationFrame(frameId)
+      frameId = 0
+    }
+
+    const render = (now: number) => {
+      if (!running) return
+
+      drawFrame(now)
+      frameId = requestAnimationFrame(render)
     }
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     const onMotionChange = (event: MediaQueryListEvent) => {
       reducedMotion = event.matches
+      if (reducedMotion) drawFrame(performance.now())
     }
 
     resize()
-    frameId = requestAnimationFrame(render)
+    scheduleFrame()
 
     const resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(canvas)
-    document.addEventListener('visibilitychange', onVisibility)
     motionQuery.addEventListener('change', onMotionChange)
 
     return () => {
-      cancelAnimationFrame(frameId)
+      stopLoop()
       resizeObserver.disconnect()
-      document.removeEventListener('visibilitychange', onVisibility)
       motionQuery.removeEventListener('change', onMotionChange)
       gl.deleteBuffer(buffer)
       gl.deleteProgram(program)

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import { getTransitionSceneFade, type ProjectTransitionState } from './projectTransition'
-import { useFrame, useLoader } from '@react-three/fiber'
+import { useFrame, useLoader, useThree } from '@react-three/fiber'
 import { GalleryGLTFLoader } from './galleryGltfLoader'
 import * as THREE from 'three'
 import { getSpiralCenterTransform } from './spiralInfinite'
@@ -112,6 +112,7 @@ export function VhsTapeCenter({
   transitionRef,
 }: VhsTapeCenterProps) {
   const { scene } = useLoader(GalleryGLTFLoader, modelUrl)
+  const invalidate = useThree((state) => state.invalidate)
   const groupRef = useRef<THREE.Group>(null)
   const innerRef = useRef<THREE.Group>(null)
   const opacityRef = useRef(1)
@@ -179,6 +180,10 @@ export function VhsTapeCenter({
 
     inner.visible = opacityRef.current > 0.02
     applyModelOpacity(materials, opacityRef.current)
+
+    if (introFadeRef.current < 0.999 || transitionRef?.current?.active) {
+      invalidate()
+    }
   })
 
   return (

@@ -31,6 +31,8 @@ import { VhsTapeCenter } from './VhsTapeCenter'
 import { useIsMobileGallery } from './mobilePerf'
 import { setGalleryNavApi } from './galleryNav'
 import { applyPerfToGalleryItem, PERF_TOGGLES } from './perfToggles'
+import { requestGalleryFrame } from './galleryFrameLoop'
+import { getGalleryScrollVelocity } from './galleryScrollSpeed'
 import {
   CONVERGE_DURATION,
   MOVE_DURATION,
@@ -48,6 +50,7 @@ const GALLERY_GROUP_Y = 0.2
 type CurvedWheelGalleryProps = {
   mode: LayoutMode
   category: GalleryCategory | null
+  autoScrollEnabled?: boolean
   onActiveItemChange?: (item: GalleryItem) => void
   onBackgroundItemChange?: (item: GalleryItem) => void
   onItemSelect?: (item: GalleryItem, spiralSlot?: number) => void
@@ -90,11 +93,9 @@ function GalleryLighting({ mobile }: { mobile: boolean }) {
   return (
     <>
       <hemisphereLight color="#f4f6fc" groundColor="#242830" intensity={1.4} />
-      <ambientLight intensity={0.58} color="#fafaff" />
+      <ambientLight intensity={0.62} color="#fafaff" />
       <directionalLight position={[1, 6, 9]} intensity={1.28} color="#fffaf4" />
-      <directionalLight position={[-7, 3, 5]} intensity={0.78} color="#eef2ff" />
-      <directionalLight position={[0, 1, -7]} intensity={0.52} color="#c8d8f4" />
-      <directionalLight position={[0, 8, 2]} intensity={0.45} color="#ffffff" />
+      <directionalLight position={[-7, 3, 5]} intensity={0.82} color="#eef2ff" />
     </>
   )
 }
@@ -174,6 +175,7 @@ function CenterModelLoaded({
 export function CurvedWheelGallery({
   mode,
   category,
+  autoScrollEnabled = true,
   onActiveItemChange,
   onBackgroundItemChange,
   onItemSelect,
@@ -185,7 +187,7 @@ export function CurvedWheelGallery({
   onReady,
   onSettled,
 }: CurvedWheelGalleryProps) {
-  const { camera, size } = useThree()
+  const { camera, size, invalidate } = useThree()
   const isMobile = useIsMobileGallery()
   const transitionRef = useRef<ProjectTransitionState | null>(null)
   const heroLockRef = useRef<HeroLockState | null>(null)
@@ -203,11 +205,12 @@ export function CurvedWheelGallery({
   const total = items.length
   const isAll = mode === 'all'
   const { step, reset, stepBy } = useGalleryScroll(isAll && total > 0, {
-    freeScroll: false,
+    freeScroll: !isMobile,
+    autoScrollEnabled: !isMobile && autoScrollEnabled,
   })
 
   useEffect(() => {
-    if (!isAll || total === 0) {
+    if (!isAll || total === 0 || !isMobile) {
       setGalleryNavApi(null)
       return
     }
@@ -218,7 +221,7 @@ export function CurvedWheelGallery({
     })
 
     return () => setGalleryNavApi(null)
-  }, [isAll, total, stepBy])
+  }, [isAll, total, isMobile, stepBy])
   const offsetRef = useRef(0)
   const frontSlotRef = useRef(0)
   const backgroundSlotRef = useRef(0)
@@ -247,6 +250,7 @@ export function CurvedWheelGallery({
       cardHoverCountRef.current + (hovered ? 1 : -1),
     )
     onCardHoverChangeRef.current?.(cardHoverCountRef.current > 0)
+    requestGalleryFrame()
   }
 
   const handleItemSelect = useCallback(
@@ -418,6 +422,8 @@ export function CurvedWheelGallery({
       return
     }
 
+    requestGalleryFrame()
+
     const slots =
       visibleSlots.length > 0
         ? visibleSlots
@@ -482,6 +488,7 @@ export function CurvedWheelGallery({
         cardSize.width,
         heroLockRef.current.heroSide,
       )
+      invalidate()
     }
 
     window.addEventListener('resize', syncHeroLayout)
@@ -493,12 +500,15 @@ export function CurvedWheelGallery({
     cardSize.width,
     camera,
     size.width,
+    invalidate,
   ])
 
   useFrame((_, delta) => {
+    let keepRendering = false
     const transition = transitionRef.current
 
     if (transition?.active && transition.phase !== 'done') {
+      keepRendering = true
       if (transition.convergeT < 1) {
         transition.convergeT = Math.min(
           1,
@@ -534,13 +544,24 @@ export function CurvedWheelGallery({
         }
         onTransitionCompleteRef.current?.({ heroSide: transition.heroSide })
       }
+      if (keepRendering) invalidate()
       return
     }
 
     if (heroLockRef.current) return
 
     if (isAll && total > 0) {
+      keepRendering = true
       offsetRef.current = step(delta)
+
+      const velocity = getGalleryScrollVelocity()
+      if (
+        !autoScrollEnabled &&
+        Math.abs(velocity) < 0.00002 &&
+        cardHoverCountRef.current === 0
+      ) {
+        keepRendering = false
+      }
 
       const offset = offsetRef.current
       const { minSlot, maxSlot } = getVisibleSlotRange(offset, total, isMobile)
@@ -565,6 +586,8 @@ export function CurvedWheelGallery({
       frontSlotRef.current = slot
       notifyActiveItem(getGalleryItem(slot, items))
     }
+
+    if (keepRendering) invalidate()
   })
 
   const simpleItems = useMemo(
@@ -587,9 +610,6 @@ export function CurvedWheelGallery({
 
   return (
     <>
-      {!isMobile && !projectHeroLocked ? (
-        <fog attach="fog" args={['#1a1a24', 22, 52]} />
-      ) : null}
       <GalleryLighting mobile={isMobile} />
 
       <group position={[0, GALLERY_GROUP_Y, 0]} scale={galleryScale}>

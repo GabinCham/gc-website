@@ -65,7 +65,7 @@ export function getVisibleSlotsBuffer(total: number, mobile = false) {
   if (mobile) {
     return Math.max(5, Math.ceil(total * PERF_TOGGLES.mobileBufferFraction))
   }
-  return Math.max(10, Math.ceil(total * 0.55))
+  return Math.max(8, Math.ceil(total * PERF_TOGGLES.desktopBufferFraction))
 }
 
 /**

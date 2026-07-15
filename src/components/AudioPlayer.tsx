@@ -86,20 +86,22 @@ type AudioPlayerProps = {
   src?: string
   waveformSrc?: string
   syncPlaybackToScroll?: boolean
+  pageVisible?: boolean
 }
 
 export function AudioPlayer({
   src = SITE_TRACK,
   waveformSrc,
   syncPlaybackToScroll = false,
+  pageVisible = true,
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const peaksRef = useRef<number[]>(PLACEHOLDER_PEAKS)
-  const rafRef = useRef<number>(0)
   const playbackRateRef = useRef(1)
   const syncPlaybackRef = useRef(syncPlaybackToScroll)
   const audioActivatedRef = useRef(false)
+  const wasPlayingRef = useRef(false)
   syncPlaybackRef.current = syncPlaybackToScroll
 
   const resolvedWaveformSrc = waveformSrc ?? getWaveformUrl(src)
@@ -125,21 +127,6 @@ export function AudioPlayer({
     drawWaveform(canvas, peaksRef.current, progress)
   }, [])
 
-  const tick = useCallback(() => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    const target = syncPlaybackRef.current
-      ? galleryVelocityToPlaybackRate(getGalleryScrollVelocity())
-      : 1
-    applyPlaybackRate(audio, target, playbackRateRef)
-
-    if (audio.duration) {
-      redraw(audio.currentTime / audio.duration)
-    }
-    rafRef.current = requestAnimationFrame(tick)
-  }, [redraw])
-
   useEffect(() => {
     redraw(0)
   }, [redraw])
@@ -147,12 +134,12 @@ export function AudioPlayer({
   useEffect(() => {
     const unsubscribe = subscribeGalleryScrollVelocity(() => {
       const audio = audioRef.current
-      if (!audio || !syncPlaybackRef.current) return
+      if (!audio || !syncPlaybackRef.current || !pageVisible) return
       const target = galleryVelocityToPlaybackRate(getGalleryScrollVelocity())
       applyPlaybackRate(audio, target, playbackRateRef)
     })
     return unsubscribe
-  }, [])
+  }, [pageVisible])
 
   useEffect(() => {
     let cancelled = false
@@ -195,6 +182,7 @@ export function AudioPlayer({
     audio.preservesPitch = true
 
     const start = () => {
+      if (!pageVisible) return
       audio.currentTime = START_AT_SECONDS
       audio.play().then(() => setPlaying(true)).catch(() => {})
     }
@@ -202,41 +190,51 @@ export function AudioPlayer({
     if (audio.readyState >= 3) start()
     else audio.addEventListener('canplaythrough', start, { once: true })
 
-    const onPlay = () => {
-      setPlaying(true)
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = requestAnimationFrame(tick)
-    }
-    const onPause = () => {
-      setPlaying(false)
-      cancelAnimationFrame(rafRef.current)
+    const onPlay = () => setPlaying(true)
+    const onPause = () => setPlaying(false)
+    const onTimeUpdate = () => {
+      if (audio.duration) {
+        redraw(audio.currentTime / audio.duration)
+      }
     }
 
     audio.addEventListener('play', onPlay)
     audio.addEventListener('pause', onPause)
+    audio.addEventListener('timeupdate', onTimeUpdate)
 
     return () => {
       audio.removeEventListener('canplaythrough', start)
       audio.removeEventListener('play', onPlay)
       audio.removeEventListener('pause', onPause)
-      cancelAnimationFrame(rafRef.current)
+      audio.removeEventListener('timeupdate', onTimeUpdate)
     }
-  }, [ready, audioActivated, tick])
+  }, [ready, audioActivated, redraw, pageVisible])
 
   useEffect(() => {
-    if (!ready) return
     const audio = audioRef.current
-    if (!audio) return
+    if (!audio || !audioActivated) return
 
-    if (syncPlaybackToScroll) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = requestAnimationFrame(tick)
-    } else {
+    if (!pageVisible) {
+      wasPlayingRef.current = !audio.paused
+      audio.pause()
+      return
+    }
+
+    if (wasPlayingRef.current) {
+      audio.play().catch(() => {})
+    }
+  }, [pageVisible, audioActivated])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || !ready) return
+
+    if (!syncPlaybackToScroll) {
       playbackRateRef.current = 1
       audio.playbackRate = 1
       audio.defaultPlaybackRate = 1
     }
-  }, [ready, syncPlaybackToScroll, tick])
+  }, [ready, syncPlaybackToScroll])
 
   useEffect(() => {
     const canvas = canvasRef.current

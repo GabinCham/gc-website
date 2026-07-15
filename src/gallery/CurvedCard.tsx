@@ -25,8 +25,10 @@ import {
 import { playCardClickSound, playCardHoverSound } from './cardInteractionSound'
 import { getGalleryMediaType, getGalleryPosterUrl, type GalleryItem } from './images'
 import type { CardLayout } from './layouts'
+import { requestGalleryFrame } from './galleryFrameLoop'
 import { getGalleryScrollVelocity } from './galleryScrollSpeed'
 import { isMobileGallery } from './mobilePerf'
+import { isPageVisible, subscribePageVisibility } from '../pageVisibility'
 import {
   getTransitionCardLayout,
   lerpAngle,
@@ -44,6 +46,8 @@ const HOVER_EMISSIVE = 0.0
 const CLICK_DRAG_PX = 10
 const DESKTOP_PLANE_SEGMENTS = 28
 const MOBILE_PLANE_SEGMENTS = 12
+const GEOMETRY_REBUILD_THRESHOLD = 0.05
+const GEOMETRY_REBUILD_THRESHOLD_FAR = 0.08
 
 /** Marge après la sortie de zone avant de repasser au poster. */
 const VIDEO_POSTER_HOLD_MS = 500
@@ -140,14 +144,14 @@ function CurvedCardMesh({
   transitionRef,
   heroLockRef,
 }: CurvedCardMeshProps) {
-  const skipCardBack = isMobileGallery()
+  const mobileSkipBack = isMobileGallery()
   const planeSegments =
-    skipCardBack ? MOBILE_PLANE_SEGMENTS : DESKTOP_PLANE_SEGMENTS
+    mobileSkipBack ? MOBILE_PLANE_SEGMENTS : DESKTOP_PLANE_SEGMENTS
   const initialLayout =
     resolveTargetLayout(layout, spiralSlot, offsetRef) ?? layout!
   const backTexture = backTextureProp ?? texture
   const initialTextureRef = useRef(texture)
-  const { gl } = useThree()
+  const { gl, invalidate } = useThree()
   const groupRef = useRef<THREE.Group>(null)
   const meshRef = useRef<THREE.Mesh>(null)
   const bendRef = useRef(initialLayout.bendRadius)
@@ -182,9 +186,9 @@ function CurvedCardMesh({
       width,
       height,
     )
-    if (skipCardBack) material.side = THREE.DoubleSide
+    if (mobileSkipBack) material.side = THREE.DoubleSide
     return material
-  }, [width, height, skipCardBack])
+  }, [width, height, mobileSkipBack])
 
   useEffect(() => {
     frontMaterial.map = texture
@@ -195,6 +199,34 @@ function CurvedCardMesh({
     () => createRoundedCardBackMaterial(backTexture, width, height),
     [backTexture, width, height],
   )
+
+  useEffect(() => {
+    const syncFit = (
+      uniforms: MediaFitUniforms | undefined,
+      map: THREE.Texture,
+    ) => {
+      if (!uniforms) return
+      syncMediaFitUniforms(uniforms, map, width, height)
+      const [r, g, b] = CARD_BACK.greyColor
+      uniforms.uLetterboxColor.value.set(r, g, b)
+    }
+
+    syncFit(
+      frontMaterial.userData.mediaFitUniforms as MediaFitUniforms | undefined,
+      texture,
+    )
+
+    if (!mobileSkipBack) {
+      syncFit(
+        backMaterial.userData.mediaFitUniforms as MediaFitUniforms | undefined,
+        backTexture,
+      )
+      const backUniforms = backMaterial.userData.cardBackUniforms as
+        | CardBackUniforms
+        | undefined
+      if (backUniforms) syncCardBackUniforms(backUniforms)
+    }
+  }, [texture, backTexture, width, height, frontMaterial, backMaterial, mobileSkipBack])
 
   const setCanvasPointer = (active: boolean) => {
     gl.domElement.classList.toggle('gallery-canvas--pointer', active)
@@ -207,6 +239,7 @@ function CurvedCardMesh({
     onHoverChange?.(true)
     playCardHoverSound()
     setCanvasPointer(true)
+    requestGalleryFrame()
   }
 
   const handlePointerOut = (event: ThreeEvent<PointerEvent>) => {
@@ -215,6 +248,7 @@ function CurvedCardMesh({
     setHovered(false)
     onHoverChange?.(false)
     setCanvasPointer(false)
+    requestGalleryFrame()
   }
 
   const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
@@ -257,33 +291,6 @@ function CurvedCardMesh({
       interactiveRef.current = isInteractive
     }
 
-    if (!skipCardBack) {
-      const backUniforms = backMaterial.userData.cardBackUniforms as
-        | CardBackUniforms
-        | undefined
-      if (backUniforms) syncCardBackUniforms(backUniforms)
-    }
-
-    const syncFit = (
-      uniforms: MediaFitUniforms | undefined,
-      map: THREE.Texture,
-    ) => {
-      if (!uniforms) return
-      syncMediaFitUniforms(uniforms, map, width, height)
-      const [r, g, b] = CARD_BACK.greyColor
-      uniforms.uLetterboxColor.value.set(r, g, b)
-    }
-    syncFit(
-      frontMaterial.userData.mediaFitUniforms as MediaFitUniforms | undefined,
-      texture,
-    )
-    if (!skipCardBack) {
-      syncFit(
-        backMaterial.userData.mediaFitUniforms as MediaFitUniforms | undefined,
-        backTexture,
-      )
-    }
-
     const targetHover =
       !transition?.active && interactiveRef.current && hovered ? 1 : 0
     hoverAmount.current +=
@@ -296,6 +303,12 @@ function CurvedCardMesh({
     if (!group || !mesh) return
 
     const heroLock = heroLockRef?.current ?? null
+    const frontSlot = frontSlotRef?.current
+    const renderCardBack =
+      !mobileSkipBack &&
+      (spiralSlot === undefined ||
+        frontSlot === undefined ||
+        Math.abs(spiralSlot - frontSlot) <= 1)
 
     if (wasHeroLockedRef.current && !heroLock && spiralSlot !== undefined) {
       snapOnNextFrameRef.current = true
@@ -331,15 +344,17 @@ function CurvedCardMesh({
 
     const cardVisible = cardOpacity > 0.02
     mesh.visible = cardVisible
-    if (!skipCardBack) backMaterial.visible = cardVisible
+    if (!mobileSkipBack) {
+      backMaterial.visible = cardVisible && renderCardBack
+    }
 
     frontMaterial.transparent = cardOpacity < 1
     frontMaterial.opacity = cardOpacity
     frontMaterial.depthWrite = cardVisible
-    if (!skipCardBack) {
+    if (!mobileSkipBack) {
       backMaterial.transparent = cardOpacity < 1
       backMaterial.opacity = cardOpacity
-      backMaterial.depthWrite = cardVisible
+      backMaterial.depthWrite = cardVisible && renderCardBack
     }
 
     const c = current.current
@@ -376,10 +391,29 @@ function CurvedCardMesh({
       c.scale += (targetLayout.scale - c.scale) * blend
       c.bendRadius += (targetLayout.bendRadius - c.bendRadius) * blend
 
-      if (Math.abs(c.bendRadius - bendRef.current) > 0.015) {
+      const farFromFront =
+        spiralSlot !== undefined &&
+        frontSlot !== undefined &&
+        Math.abs(spiralSlot - frontSlot) > 2
+      const geometryThreshold = farFromFront
+        ? GEOMETRY_REBUILD_THRESHOLD_FAR
+        : GEOMETRY_REBUILD_THRESHOLD
+
+      if (Math.abs(c.bendRadius - bendRef.current) > geometryThreshold) {
         bendRef.current = c.bendRadius
         updateCurvedPlaneGeometry(mesh.geometry, c.bendRadius)
       }
+    }
+
+    const stillIntro = introFadeRef.current < 0.999
+    const stillHover = Math.abs(hoverAmount.current - targetHover) > 0.008
+    const stillLayout =
+      !snapLayout &&
+      !snapOnNextFrameRef.current &&
+      Math.abs(c.bendRadius - targetLayout.bendRadius) > 0.02
+
+    if (stillIntro || stillHover || stillLayout || transition?.active || heroLock) {
+      invalidate()
     }
 
     const hoverScale =
@@ -402,7 +436,7 @@ function CurvedCardMesh({
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
       />
-      {!skipCardBack ? (
+      {!mobileSkipBack ? (
         <mesh geometry={geometry} material={backMaterial} />
       ) : null}
     </group>
@@ -444,8 +478,7 @@ function computeSpiralPlayVideo(
   offsetRef: RefObject<number>,
   frontSlotRef: RefObject<number>,
 ) {
-  const mobile = isMobileGallery()
-  if (mobile) {
+  if (isMobileGallery()) {
     return spiralSlot === frontSlotRef.current
   }
   return isSpiralVideoSlot(
@@ -479,6 +512,7 @@ function useSpiralPlayVideo(
     if (should !== desiredRef.current) {
       desiredRef.current = should
       setPlayVideo(should)
+      requestGalleryFrame()
     }
   })
 
@@ -498,8 +532,17 @@ function useVideoPlayback(
     if (!texture || !active) return
     const video = texture.image as HTMLVideoElement
     videoPlayRefs.set(url, (videoPlayRefs.get(url) ?? 0) + 1)
-    video.play().catch(() => {})
+
+    const syncPlayback = () => {
+      if (isPageVisible() && active) video.play().catch(() => {})
+      else video.pause()
+    }
+
+    syncPlayback()
+    const unsub = subscribePageVisibility(() => syncPlayback())
+
     return () => {
+      unsub()
       const next = Math.max(0, (videoPlayRefs.get(url) ?? 1) - 1)
       if (next === 0) {
         video.pause()

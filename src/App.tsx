@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRe
 import { gsap } from 'gsap'
 import { AppBackground } from './components/AppBackground'
 import { AudioPlayer } from './components/AudioPlayer'
+import { GalleryAutoScrollToggle } from './components/GalleryAutoScrollToggle'
 import { GalleryLoader } from './components/GalleryLoader'
 import { GalleryStepNav } from './components/GalleryStepNav'
 import { ProjectDetail } from './components/ProjectDetail'
@@ -17,6 +18,9 @@ import {
 import type { HeroSide, ProjectTransitionCompleteMeta } from './gallery/projectTransition'
 import type { LayoutMode } from './gallery/layouts'
 import { useIdleMount } from './useIdleMount'
+import { useIsMobileGallery } from './gallery/mobilePerf'
+import { usePageVisibility } from './usePageVisibility'
+import { requestGalleryFrame } from './gallery/galleryFrameLoop'
 import './App.css'
 
 const GalleryScene = lazy(() =>
@@ -32,6 +36,8 @@ const INITIAL_ITEM = FAVORITE_ITEMS[0] ?? GALLERY_ITEMS[0]!
 function App() {
   const GALLERY_RETURN_MS = 680
   const mountGallery = useIdleMount()
+  const isMobile = useIsMobileGallery()
+  const pageVisible = usePageVisibility()
   const [galleryReady, setGalleryReady] = useState(false)
   const [filterLoading, setFilterLoading] = useState(false)
   const [filterLoaderVisible, setFilterLoaderVisible] = useState(false)
@@ -47,6 +53,7 @@ function App() {
   )
   const simpleItems = useMemo(() => sortGalleryForSimpleList(visibleItems), [visibleItems])
 
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true)
   const [activeItem, setActiveItem] = useState(INITIAL_ITEM)
   const [backgroundColors, setBackgroundColors] = useState<GalleryBackgroundColors>(
     () => INITIAL_ITEM.backgroundColors,
@@ -224,15 +231,20 @@ function App() {
     preloadFilterModel(galleryCategory)
   }, [mountGallery, mode, galleryCategory, preloadFilterModel])
 
+  useEffect(() => {
+    if (pageVisible) requestGalleryFrame()
+  }, [pageVisible])
+
   const projectTransitioning = transitionItem !== null
   const projectOpen = selectedProject !== null
   const galleryPaused =
-    projectTransitioning || projectOpen || projectClosing || galleryReturning
+    !pageVisible || projectOpen || projectClosing || galleryReturning
 
   return (
     <div
       className={[
         'app',
+        !pageVisible ? 'app--page-hidden' : '',
         projectTransitioning ? 'app--project-transition' : '',
         projectOpen ? 'app--project-open' : '',
         projectClosing ? 'app--project-closing' : '',
@@ -244,6 +256,7 @@ function App() {
       <AppBackground
         colors={backgroundColors}
         cardHovered={cardHovered && !galleryPaused}
+        pageVisible={pageVisible}
       />
       <GalleryLoader
         hidden={galleryReady && !filterLoaderVisible}
@@ -269,7 +282,8 @@ function App() {
               <GalleryScene
                 mode={mode}
                 category={galleryCategory}
-                paused={false}
+                autoScrollEnabled={autoScrollEnabled && !projectOpen}
+                paused={galleryPaused}
                 projectTransitionItem={transitionItem}
                 onProjectTransitionComplete={handleTransitionComplete}
                 lockedHeroItem={projectOpen ? selectedProject : null}
@@ -286,7 +300,9 @@ function App() {
         </div>
       ) : null}
 
-      <GalleryStepNav hidden={mode !== 'all' || projectOpen || !galleryReady} />
+      <GalleryStepNav
+        hidden={!isMobile || mode !== 'all' || projectOpen || !galleryReady}
+      />
 
       {selectedProject ? (
         <ProjectDetail
@@ -300,6 +316,13 @@ function App() {
       ) : null}
 
       <header className="overlay">
+        {mode === 'all' && !isMobile ? (
+          <GalleryAutoScrollToggle
+            enabled={autoScrollEnabled}
+            onToggle={() => setAutoScrollEnabled((on) => !on)}
+          />
+        ) : null}
+
         <div className="site-brand">
           <img
             className="site-brand__logo"
@@ -412,6 +435,7 @@ function App() {
 
       <AudioPlayer
         syncPlaybackToScroll={mode === 'all'}
+        pageVisible={pageVisible}
       />
 
       {/* {mode === 'all' && !galleryPaused ? <VhsTuningPanel /> : null} */}

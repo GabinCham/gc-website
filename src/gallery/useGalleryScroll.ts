@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { publishGalleryScrollVelocity } from './galleryScrollSpeed'
+import {
+  AUTO_SCROLL_SPEED,
+  publishGalleryScrollVelocity,
+} from './galleryScrollSpeed'
+import { requestGalleryFrame } from './galleryFrameLoop'
 
 type ScrollState = {
   offset: number
@@ -9,6 +13,8 @@ type ScrollState = {
 const FRICTION = 0.92
 const OFFSET_WHEEL = 0.00035
 const OFFSET_DRAG = 0.0013
+const USER_IDLE_MS = 600
+const RETURN_TO_AUTO = 3.5
 const SETTLE_START = 0.018
 const SNAP_STRENGTH = 9
 const STEP_BLEND_RATE = 14
@@ -18,21 +24,46 @@ function smoothstep(value: number) {
   return t * t * (3 - 2 * t)
 }
 
+function markUserInput(lastUserInput: { current: number }) {
+  lastUserInput.current = performance.now()
+}
+
 type UseGalleryScrollOptions = {
-  /** Glisser / molette — désactivé sur mobile (flèches uniquement). */
+  /** Molette + drag (desktop). */
   freeScroll?: boolean
+  /** Défilement automatique (desktop). */
+  autoScrollEnabled?: boolean
 }
 
 export function useGalleryScroll(
   enabled: boolean,
-  { freeScroll = true }: UseGalleryScrollOptions = {},
+  {
+    freeScroll = true,
+    autoScrollEnabled = false,
+  }: UseGalleryScrollOptions = {},
 ) {
-  const state = useRef<ScrollState>({ offset: 0, velocity: 0 })
+  const state = useRef<ScrollState>({
+    offset: 0,
+    velocity: autoScrollEnabled ? AUTO_SCROLL_SPEED : 0,
+  })
   const dragging = useRef(false)
   const lastPointer = useRef({ x: 0, y: 0 })
+  const lastUserInput = useRef(0)
   const stepTargetRef = useRef<number | null>(null)
   const freeScrollRef = useRef(freeScroll)
+  const autoScrollRef = useRef(autoScrollEnabled)
   freeScrollRef.current = freeScroll
+  autoScrollRef.current = autoScrollEnabled
+
+  useEffect(() => {
+    if (!enabled || !autoScrollEnabled || dragging.current) return
+
+    const idle = performance.now() - lastUserInput.current > USER_IDLE_MS
+    if (!idle) return
+
+    state.current.velocity = AUTO_SCROLL_SPEED
+    publishGalleryScrollVelocity(AUTO_SCROLL_SPEED)
+  }, [enabled, autoScrollEnabled])
 
   const onWheel = useCallback(
     (event: WheelEvent) => {
@@ -40,8 +71,10 @@ export function useGalleryScroll(
         return
       }
       event.preventDefault()
+      markUserInput(lastUserInput)
       state.current.velocity -= event.deltaY * OFFSET_WHEEL
       publishGalleryScrollVelocity(state.current.velocity)
+      requestGalleryFrame()
     },
     [enabled],
   )
@@ -52,6 +85,7 @@ export function useGalleryScroll(
         return
       }
       dragging.current = true
+      markUserInput(lastUserInput)
       lastPointer.current = { x: event.clientX, y: event.clientY }
     },
     [enabled],
@@ -61,6 +95,8 @@ export function useGalleryScroll(
     (event: PointerEvent) => {
       if (!enabled || !freeScrollRef.current || !dragging.current) return
 
+      markUserInput(lastUserInput)
+
       const dx = event.clientX - lastPointer.current.x
       const dy = event.clientY - lastPointer.current.y
       lastPointer.current = { x: event.clientX, y: event.clientY }
@@ -68,6 +104,7 @@ export function useGalleryScroll(
       state.current.velocity += dx * OFFSET_DRAG
       state.current.velocity -= dy * OFFSET_DRAG
       publishGalleryScrollVelocity(state.current.velocity)
+      requestGalleryFrame()
     },
     [enabled],
   )
@@ -101,6 +138,7 @@ export function useGalleryScroll(
     s.offset = snapped
     stepTargetRef.current = snapped + direction
     publishGalleryScrollVelocity(0)
+    requestGalleryFrame()
   }, [])
 
   const step = useCallback(
@@ -123,12 +161,28 @@ export function useGalleryScroll(
         return s.offset
       }
 
+      const userIdle =
+        enabled &&
+        autoScrollRef.current &&
+        !dragging.current &&
+        performance.now() - lastUserInput.current > USER_IDLE_MS
+
       if (!dragging.current) {
         s.offset += s.velocity
-        s.velocity *= FRICTION
+        if (!userIdle) {
+          s.velocity *= FRICTION
+        }
       }
 
-      if (enabled && !dragging.current && freeScrollRef.current) {
+      if (userIdle) {
+        const diff = AUTO_SCROLL_SPEED - s.velocity
+        if (Math.abs(diff) < AUTO_SCROLL_SPEED * 0.04) {
+          s.velocity = AUTO_SCROLL_SPEED
+        } else {
+          const t = 1 - Math.exp(-RETURN_TO_AUTO * delta)
+          s.velocity += diff * t
+        }
+      } else if (enabled && !dragging.current && freeScrollRef.current) {
         if (Math.abs(s.velocity) < 0.00002) s.velocity = 0
 
         const speed = Math.abs(s.velocity)
@@ -158,9 +212,14 @@ export function useGalleryScroll(
   )
 
   const reset = useCallback(() => {
-    state.current = { offset: 0, velocity: 0 }
+    state.current = {
+      offset: 0,
+      velocity: autoScrollRef.current ? AUTO_SCROLL_SPEED : 0,
+    }
     stepTargetRef.current = null
-    publishGalleryScrollVelocity(0)
+    lastUserInput.current = 0
+    publishGalleryScrollVelocity(state.current.velocity)
+    requestGalleryFrame()
   }, [])
 
   return { step, reset, stepBy }

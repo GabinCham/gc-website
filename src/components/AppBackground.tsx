@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GalleryBackgroundColors } from '../gallery/images'
 import { buildBackgroundGradient } from '../gallery/images'
 import { useIsMobileGallery } from '../gallery/mobilePerf'
+import { isPageVisible } from '../pageVisibility'
 import { PERF_TOGGLES } from '../gallery/perfToggles'
 import { MeshGradientCanvas } from './MeshGradientCanvas'
 
@@ -53,13 +54,34 @@ function lerpColors(
   }
 }
 
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(() =>
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  )
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onChange = (event: MediaQueryListEvent) => setReduced(event.matches)
+    query.addEventListener('change', onChange)
+    return () => query.removeEventListener('change', onChange)
+  }, [])
+
+  return reduced
+}
+
 type AppBackgroundProps = {
   colors: GalleryBackgroundColors
   cardHovered?: boolean
+  pageVisible?: boolean
 }
 
-export function AppBackground({ colors, cardHovered = false }: AppBackgroundProps) {
+export function AppBackground({
+  colors,
+  cardHovered = false,
+  pageVisible = true,
+}: AppBackgroundProps) {
   const isMobile = useIsMobileGallery()
+  const prefersReducedMotion = usePrefersReducedMotion()
   const [from, setFrom] = useState(colors)
   const [to, setTo] = useState(colors)
   const [mix, setMix] = useState(1)
@@ -74,9 +96,19 @@ export function AppBackground({ colors, cardHovered = false }: AppBackgroundProp
     targetRef.current = colors
     setMix(0)
 
+    if (prefersReducedMotion) {
+      setMix(1)
+      return
+    }
+
     const start = performance.now()
 
     const step = (now: number) => {
+      if (!isPageVisible()) {
+        animRef.current = requestAnimationFrame(step)
+        return
+      }
+
       const t = easeInOutCubic(Math.min(1, (now - start) / FADE_MS))
       setMix(t)
       if (t < 1) {
@@ -91,17 +123,21 @@ export function AppBackground({ colors, cardHovered = false }: AppBackgroundProp
         cancelAnimationFrame(animRef.current)
       }
     }
-  }, [colors])
+  }, [colors, prefersReducedMotion])
 
   const displayColors = useMemo(
     () => lerpColors(from, to, mix),
     [from, to, mix],
   )
 
+  const useStaticGradient =
+    !PERF_TOGGLES.meshGradient || prefersReducedMotion || !pageVisible
+
   const backgroundClass = [
     'app-background',
     cardHovered ? 'app-background--card-hover' : '',
     isMobile ? 'app-background--mobile' : '',
+    prefersReducedMotion ? 'app-background--reduced-motion' : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -109,13 +145,13 @@ export function AppBackground({ colors, cardHovered = false }: AppBackgroundProp
   return (
     <div className={backgroundClass} aria-hidden>
       <div className="mesh-gradient">
-        {PERF_TOGGLES.meshGradient ? (
-          <MeshGradientCanvas colors={displayColors} reduced={isMobile} />
-        ) : (
+        {useStaticGradient ? (
           <div
             className="mesh-gradient__canvas"
             style={{ background: buildBackgroundGradient(displayColors) }}
           />
+        ) : (
+          <MeshGradientCanvas colors={displayColors} reduced={isMobile} />
         )}
       </div>
       <div className="crt-overlay" />

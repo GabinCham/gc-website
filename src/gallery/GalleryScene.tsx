@@ -1,7 +1,8 @@
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { useEffect } from 'react'
 import * as THREE from 'three'
 import { CurvedWheelGallery } from './CurvedWheelGallery'
+import { registerGalleryInvalidate } from './galleryFrameLoop'
 import { preloadCenterModelForCategory } from './preloadCenterModel'
 import { type GalleryCategory, type GalleryItem } from './images'
 import type { LayoutMode } from './layouts'
@@ -9,9 +10,33 @@ import type { ProjectTransitionCompleteMeta } from './projectTransition'
 import { useIsMobileGallery } from './mobilePerf'
 import { PERF_TOGGLES } from './perfToggles'
 
+function GalleryInvalidateRegistry() {
+  const invalidate = useThree((state) => state.invalidate)
+
+  useEffect(() => {
+    registerGalleryInvalidate(invalidate)
+    invalidate()
+    return () => registerGalleryInvalidate(null)
+  }, [invalidate])
+
+  return null
+}
+
+function resolveGalleryFrameloop(
+  paused: boolean,
+  autoScrollEnabled: boolean,
+): 'always' | 'demand' | 'never' {
+  if (paused || PERF_TOGGLES.galleryFrameloop === 'never') return 'never'
+  if (autoScrollEnabled || PERF_TOGGLES.galleryFrameloop === 'always') {
+    return 'always'
+  }
+  return 'demand'
+}
+
 type GallerySceneProps = {
   mode: LayoutMode
   category: GalleryCategory | null
+  autoScrollEnabled?: boolean
   paused?: boolean
   onActiveItemChange?: (item: GalleryItem) => void
   onBackgroundItemChange?: (item: GalleryItem) => void
@@ -28,6 +53,7 @@ type GallerySceneProps = {
 export function GalleryScene({
   mode,
   category,
+  autoScrollEnabled = true,
   paused = false,
   onActiveItemChange,
   onBackgroundItemChange,
@@ -57,18 +83,18 @@ export function GalleryScene({
         powerPreference: 'high-performance',
       }}
       style={{ background: 'transparent' }}
-      dpr={isMobile ? 1 : [1, 2]}
-      frameloop={
-        paused || PERF_TOGGLES.galleryFrameloop === 'never' ? 'never' : 'always'
-      }
+      dpr={isMobile ? 1 : [1, 1.5]}
+      frameloop={resolveGalleryFrameloop(paused, autoScrollEnabled)}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping
         gl.toneMappingExposure = isMobile ? 1.5 : 1.65
       }}
     >
+      <GalleryInvalidateRegistry />
       <CurvedWheelGallery
         mode={mode}
         category={category}
+        autoScrollEnabled={autoScrollEnabled}
         onActiveItemChange={onActiveItemChange}
         onBackgroundItemChange={onBackgroundItemChange}
         onItemSelect={onItemSelect}
