@@ -12,6 +12,9 @@ const STANDALONE_PAGES = {
       default: m.QueDesNumeros10Page,
     })),
   ),
+  '/diesel': lazy(() =>
+    import('./pages/DieselPage.tsx').then((m) => ({ default: m.DieselPage })),
+  ),
 } as const
 
 const pathname = window.location.pathname.replace(/\/$/, '') || '/'

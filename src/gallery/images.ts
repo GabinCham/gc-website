@@ -340,22 +340,22 @@ export const GALLERY_ITEMS: GalleryItem[] = [
       },
     },
   ),
-  galleryItem('25', '/videos/drmarteens_reduce.webm', 'Dr. Martens', 'Exploration créative autour de la marque.', {
-    category: 'coding',
+  galleryItem('25', '/posters/diesel-poster.png', 'Diesel', 'Landing scroll — sac 3D, caméra Blender et configurateur de couleurs.', {
+    category: 'playground',
     simpleOrder: 9,
     favorite: true,
-    href: '/marteens',
-    colors: bg('#9ec8ee', '#7f2e26', '#1590ff', '#560a0c'),
+    href: '/diesel',
+    colors: bg('#c8d0d6', '#1a2a22', '#7a8f7c', '#0c1210'),
     details: {
       year: '2026',
-      role: 'Playground · Direction créative',
+      role: 'Front-end · 3D · Landing',
       highlights: [
-        'Concept libre, réalisé pour le plaisir',
-        'Exploration graphique de l’univers Dr. Martens',
-        'Mise en scène de l’icône sans contrainte client',
+        'Sac Diesel 1DR en WebGL, animé au scroll',
+        'Caméra et modèle exportés depuis Blender',
+        'Sélecteur de couleurs et ambiance forestière',
       ],
       longDescription:
-        'Une exploration créative autour de Dr. Martens, entre héritage punk et mise en scène contemporaine. L’occasion d’expérimenter sans brief, avec liberté totale.',
+        'Playground autour du sac Diesel 1DR : une expérience scroll immersive où la caméra Blender guide le regard, le HDR forestier enveloppe le produit, et un configurateur de couleurs laisse personnaliser le cuir en fin de parcours.',
     },
   }),
 ]

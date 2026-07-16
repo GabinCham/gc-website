@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const distDir = join(__dirname, '..', 'dist')
 const indexPath = join(distDir, 'index.html')
 
-const SPA_ROUTES = ['brasserie', 'quedesnumeros10']
+const SPA_ROUTES = ['brasserie', 'quedesnumeros10', 'diesel']
 
 const indexHtml = readFileSync(indexPath, 'utf8')
 

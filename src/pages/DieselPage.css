@@ -1,0 +1,357 @@
+.diesel-page {
+  position: fixed;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-anchor: none;
+  overscroll-behavior: none;
+  background: #0c1210;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, #d7e4dc 30%, transparent) transparent;
+}
+
+.diesel-page__viewport {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.diesel-page__canvas-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.diesel-page__canvas {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  pointer-events: none;
+}
+
+.diesel-page__audio {
+  position: absolute;
+  top: 1.15rem;
+  right: 1.15rem;
+  z-index: 5;
+}
+
+.diesel-page__audio-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.85rem 0.4rem 0.7rem;
+  border: 1px solid color-mix(in srgb, #ffffff 14%, transparent);
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, #101816 72%, transparent),
+      color-mix(in srgb, #0a0f0d 88%, transparent)
+    );
+  box-shadow:
+    0 10px 28px color-mix(in srgb, #000000 35%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  color: color-mix(in srgb, #f2f7f4 82%, transparent);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  appearance: none;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.diesel-page__audio-btn:hover {
+  color: #f2f7f4;
+  border-color: color-mix(in srgb, #ffffff 28%, transparent);
+  transform: translateY(-1px);
+}
+
+.diesel-page__audio-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, #f2f7f4 70%, transparent);
+  outline-offset: 3px;
+}
+
+.diesel-page__audio-icon {
+  display: grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.9;
+}
+
+.diesel-page__audio-label {
+  line-height: 1;
+}
+
+.diesel-page__audio-eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 0.85rem;
+  opacity: 0.35;
+}
+
+.diesel-page__audio-eq i {
+  display: block;
+  width: 2px;
+  height: 35%;
+  border-radius: 1px;
+  background: currentColor;
+  transform-origin: bottom center;
+}
+
+.diesel-page__audio-eq--on {
+  opacity: 0.85;
+}
+
+.diesel-page__audio-eq--on i:nth-child(1) {
+  animation: diesel-eq 0.9s ease-in-out infinite;
+}
+
+.diesel-page__audio-eq--on i:nth-child(2) {
+  animation: diesel-eq 0.9s ease-in-out 0.15s infinite;
+  height: 70%;
+}
+
+.diesel-page__audio-eq--on i:nth-child(3) {
+  animation: diesel-eq 0.9s ease-in-out 0.3s infinite;
+  height: 50%;
+}
+
+@keyframes diesel-eq {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.diesel-page__loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: color-mix(in srgb, #f2f7f4 55%, transparent);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+}
+
+.diesel-page__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 1.35rem;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  transform: translate(-50%, 0.4rem);
+  opacity: 0;
+  color: color-mix(in srgb, #f2f7f4 70%, transparent);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  pointer-events: none;
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease;
+}
+
+.diesel-page__hint--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.diesel-page__hint-line {
+  width: 1px;
+  height: 2.4rem;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, #f2f7f4 0%, transparent),
+    color-mix(in srgb, #f2f7f4 55%, transparent)
+  );
+  animation: diesel-hint-pulse 1.6s ease-in-out infinite;
+}
+
+.diesel-page__colors {
+  position: absolute;
+  left: 50%;
+  bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(92vw, 28rem);
+  padding: 1rem 1.15rem 1.1rem;
+  border: 1px solid color-mix(in srgb, #ffffff 14%, transparent);
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, #101816 72%, transparent),
+      color-mix(in srgb, #0a0f0d 88%, transparent)
+    );
+  box-shadow:
+    0 18px 40px color-mix(in srgb, #000000 42%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  transform: translate(-50%, 1.1rem);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.diesel-page__colors--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+.diesel-page__colors-label {
+  margin: 0;
+  color: color-mix(in srgb, #f2f7f4 68%, transparent);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.diesel-page__swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+.diesel-page__swatch {
+  --swatch: #ffffff;
+  position: relative;
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.diesel-page__swatch::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid color-mix(in srgb, #ffffff 22%, transparent);
+  opacity: 0.55;
+  transition:
+    opacity 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.diesel-page__swatch-core {
+  position: absolute;
+  inset: 0.28rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      120% 90% at 30% 22%,
+      color-mix(in srgb, #ffffff 28%, var(--swatch)),
+      var(--swatch) 55%
+    );
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, #ffffff 35%, transparent),
+    inset 0 -2px 4px color-mix(in srgb, #000000 35%, transparent),
+    0 4px 10px color-mix(in srgb, #000000 28%, transparent);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.diesel-page__swatch:hover {
+  transform: translateY(-2px) scale(1.06);
+}
+
+.diesel-page__swatch:hover::before {
+  opacity: 0.9;
+  border-color: color-mix(in srgb, #ffffff 55%, transparent);
+}
+
+.diesel-page__swatch:focus-visible {
+  outline: 2px solid color-mix(in srgb, #f2f7f4 70%, transparent);
+  outline-offset: 3px;
+}
+
+.diesel-page__swatch--active {
+  transform: translateY(-1px) scale(1.08);
+}
+
+.diesel-page__swatch--active::before {
+  inset: -3px;
+  opacity: 1;
+  border-color: #f2f7f4;
+  border-width: 2px;
+}
+
+.diesel-page__swatch--active .diesel-page__swatch-core {
+  transform: scale(0.96);
+}
+
+.diesel-page__scroll-track {
+  pointer-events: none;
+}
+
+@keyframes diesel-hint-pulse {
+  0%,
+  100% {
+    transform: scaleY(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scaleY(0.72);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 540px) {
+  .diesel-page__colors {
+    width: min(94vw, 22rem);
+    padding: 0.85rem 0.9rem 0.95rem;
+    border-radius: 1.75rem;
+    gap: 0.6rem;
+  }
+
+  .diesel-page__swatch {
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+
+  .diesel-page__swatches {
+    gap: 0.45rem;
+  }
+}
