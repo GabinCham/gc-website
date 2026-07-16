@@ -8,9 +8,9 @@ export type WorldCupComposeTuning = {
 
 export const WORLD_CUP_COMPOSE_TUNING: WorldCupComposeTuning = {
   coupe: {
-    x: 41,
-    y: 50,
-    scale: 2.22,
+    x: 0,
+    y: 0,
+    scale: 1,
   },
 }
 

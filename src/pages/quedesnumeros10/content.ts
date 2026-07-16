@@ -1,12 +1,12 @@
 import equipesData from './equipes.json'
-import { getContrastTextColor, resolveCouleur } from './colors'
+import { getMarkThemeStyle, resolveCouleur } from './colors'
 
 export const QDN10_HDR_URL = new URL(
   '../../../assets/forest_slope_4k.hdr',
   import.meta.url,
 ).href
 
-export const WORLD_CUP_GLB_URL = '/glb/world-cup/world_cup.glb'
+export const WORLD_CUP_GLB_URL = '/glb/world-cup/wc-trophy.glb'
 export const TRIONDA_GLB_URL = '/glb/world-cup/trionda.glb'
 
 export const QDN10_GLB_URLS = [WORLD_CUP_GLB_URL, TRIONDA_GLB_URL] as const
@@ -34,7 +34,7 @@ export const EQUIPES: EquipeNumero10Resolved[] = (
     ...entry,
     couleurGauche,
     couleurDroite,
-    texte: getContrastTextColor(couleurGauche, couleurDroite),
+    texte: '#ffffff',
   }
 })
 
@@ -57,5 +57,6 @@ export function getEquipeThemeStyle(
     '--qdn10-bg-left': equipe.couleurGauche,
     '--qdn10-bg-right': equipe.couleurDroite,
     '--qdn10-text': equipe.texte,
+    ...getMarkThemeStyle(equipe.couleurGauche, equipe.couleurDroite),
   }
 }

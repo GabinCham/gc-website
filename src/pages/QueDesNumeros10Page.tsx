@@ -1,21 +1,16 @@
-import { Suspense, useEffect, useSyncExternalStore, type CSSProperties } from 'react'
+import { Suspense, useEffect, type CSSProperties } from 'react'
 import { useLoader } from '@react-three/fiber'
-import { WorldCupComposeTuningPanel } from '../components/WorldCupComposeTuningPanel'
 import {
   EQUIPES,
   QDN10_GLB_URLS,
   QDN10_SCROLL_SECTIONS,
-  TRIONDA_GLB_URL,
   WORLD_CUP_GLB_URL,
 } from './quedesnumeros10/content'
 import { Qdn10ModelStage } from './quedesnumeros10/Qdn10ModelStage'
+import { MARK_FRAMING_CONFIG } from './quedesnumeros10/mark-framing.config'
 import { WORLD_CUP_COMPOSE_CONFIG } from './quedesnumeros10/world-cup-compose.config'
-import {
-  getWorldCupComposeTuningSnapshot,
-  subscribeWorldCupComposeTuning,
-  WORLD_CUP_COMPOSE_TUNING,
-} from './quedesnumeros10/worldCupComposeTuning'
 import { useQueDesNumeros10Scroll } from './quedesnumeros10/useQueDesNumeros10Scroll'
+import { Qdn10BgMark } from './quedesnumeros10/Qdn10BgMark'
 import { GalleryGLTFLoader } from '../gallery/galleryGltfLoader'
 import './QueDesNumeros10Page.css'
 
@@ -30,12 +25,6 @@ export function QueDesNumeros10Page() {
 
   const equipe = EQUIPES[activeEquipeIndex]!
 
-  const composeTuning = useSyncExternalStore(
-    subscribeWorldCupComposeTuning,
-    getWorldCupComposeTuningSnapshot,
-    () => WORLD_CUP_COMPOSE_TUNING,
-  )
-
   useEffect(() => {
     for (const url of QDN10_GLB_URLS) {
       useLoader.preload(GalleryGLTFLoader, url)
@@ -46,35 +35,31 @@ export function QueDesNumeros10Page() {
   return (
     <div className="qdn10-page" ref={scrollRef}>
       <div className="qdn10-page__viewport" ref={viewportRef}>
-        <div className="qdn10-page__bg" aria-hidden>
-          <div className="qdn10-page__bg-half qdn10-page__bg-half--left" />
-          <div className="qdn10-page__bg-half qdn10-page__bg-half--right" />
+        <div
+          className="qdn10-page__bg"
+          style={
+            {
+              '--qdn10-mark-x': `${MARK_FRAMING_CONFIG.x}px`,
+              '--qdn10-mark-y': `${MARK_FRAMING_CONFIG.y}px`,
+              '--qdn10-mark-scale': MARK_FRAMING_CONFIG.scale,
+            } as CSSProperties
+          }
+          aria-hidden
+        >
+          <Qdn10BgMark />
         </div>
-
-        <a className="qdn10-page__back qdn10-page__text-legible" href="/">
-          ← Portfolio
-        </a>
 
         <div
           className="qdn10-page__world-cup-compose"
           style={
             {
-              '--qdn10-logo-x': WORLD_CUP_COMPOSE_CONFIG.logo.x,
-              '--qdn10-logo-y': WORLD_CUP_COMPOSE_CONFIG.logo.y,
-              '--qdn10-logo-scale': WORLD_CUP_COMPOSE_CONFIG.logo.scale,
-              '--qdn10-coupe-x': `${composeTuning.coupe.x}px`,
-              '--qdn10-coupe-y': `${composeTuning.coupe.y}px`,
-              '--qdn10-coupe-scale': composeTuning.coupe.scale,
+              '--qdn10-coupe-x': WORLD_CUP_COMPOSE_CONFIG.coupe.x,
+              '--qdn10-coupe-y': WORLD_CUP_COMPOSE_CONFIG.coupe.y,
+              '--qdn10-coupe-scale': WORLD_CUP_COMPOSE_CONFIG.coupe.scale,
             } as CSSProperties
           }
           aria-hidden
         >
-          <img
-            className="qdn10-page__world-cup-logo"
-            src={WORLD_CUP_COMPOSE_CONFIG.logoUrl}
-            alt=""
-            draggable={false}
-          />
           <Suspense fallback={null}>
             <Qdn10ModelStage
               className="qdn10-page__world-cup-model"
@@ -88,31 +73,22 @@ export function QueDesNumeros10Page() {
 
         <p
           key={`country-${activeEquipeIndex}`}
-          className="qdn10-page__country qdn10-page__text-legible"
+          className="qdn10-page__country"
         >
           {equipe.equipe}
         </p>
 
-        <Suspense fallback={null}>
-          <Qdn10ModelStage
-            className="qdn10-page__stage qdn10-page__stage--bottom"
-            url={TRIONDA_GLB_URL}
-            scrollProgressRef={scrollProgressRef}
-            targetSize={2.4}
-          />
-        </Suspense>
-
-        <div className="qdn10-page__footer">
+        <div className="qdn10-page__identity">
           <p
             key={`number-${activeEquipeIndex}`}
-            className="qdn10-page__number qdn10-page__text-legible qdn10-page__text-legible--strong"
+            className="qdn10-page__number"
             aria-hidden
           >
             10
           </p>
           <p
             key={`player-${activeEquipeIndex}`}
-            className="qdn10-page__player qdn10-page__text-legible"
+            className="qdn10-page__player"
           >
             {equipe.numero_10}
           </p>
@@ -121,7 +97,6 @@ export function QueDesNumeros10Page() {
         <div
           className={[
             'qdn10-page__hint',
-            'qdn10-page__text-legible',
             scrollHintVisible ? 'qdn10-page__hint--visible' : '',
           ]
             .filter(Boolean)
@@ -133,17 +108,26 @@ export function QueDesNumeros10Page() {
         </div>
 
         <div className="qdn10-page__progress" aria-hidden>
-          {EQUIPES.map((entry, index) => (
-            <span
-              key={entry.equipe}
-              className={[
-                'qdn10-page__dot',
-                index === activeEquipeIndex ? 'qdn10-page__dot--active' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            />
-          ))}
+          {EQUIPES.map((entry, index) => {
+            const distance = Math.abs(index - activeEquipeIndex)
+            if (distance > 5) return null
+
+            const opacity =
+              distance === 0 ? 1 : Math.max(0.12, 1 - distance * 0.18)
+
+            return (
+              <span
+                key={entry.equipe}
+                className={[
+                  'qdn10-page__dot',
+                  distance === 0 ? 'qdn10-page__dot--active' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                style={{ opacity }}
+              />
+            )
+          })}
         </div>
       </div>
 
@@ -152,8 +136,6 @@ export function QueDesNumeros10Page() {
         style={{ height: `${QDN10_SCROLL_SECTIONS * 100}vh` }}
         aria-hidden
       />
-
-      <WorldCupComposeTuningPanel />
     </div>
   )
 }

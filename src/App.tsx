@@ -433,10 +433,12 @@ function App() {
         </div>
       </header>
 
-      <AudioPlayer
-        syncPlaybackToScroll={mode === 'all'}
-        pageVisible={pageVisible}
-      />
+      {!isMobile ? (
+        <AudioPlayer
+          syncPlaybackToScroll={mode === 'all'}
+          pageVisible={pageVisible}
+        />
+      ) : null}
 
       {/* {mode === 'all' && !galleryPaused ? <VhsTuningPanel /> : null} */}
     </div>

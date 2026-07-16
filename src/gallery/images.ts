@@ -83,6 +83,10 @@ export function filterGalleryByCategory(
 
 export function sortGalleryForSimpleList(items: GalleryItem[]): GalleryItem[] {
   return [...items].sort((a, b) => {
+    const aPlaygroundRank = a.category === 'playground' ? 1 : 0
+    const bPlaygroundRank = b.category === 'playground' ? 1 : 0
+    if (aPlaygroundRank !== bPlaygroundRank) return aPlaygroundRank - bPlaygroundRank
+
     const aOrder = a.simpleOrder ?? Number.POSITIVE_INFINITY
     const bOrder = b.simpleOrder ?? Number.POSITIVE_INFINITY
     if (aOrder !== bOrder) return aOrder - bOrder
