@@ -109,6 +109,13 @@
   filter: none;
 }
 
+@media (max-width: 767px) {
+  .app--project-open .gallery-stage {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
 .app--project-closing .gallery-stage {
   opacity: 0;
   transform: scale(0.985);

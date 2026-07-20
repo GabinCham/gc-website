@@ -418,6 +418,15 @@
 }
 
 @media (max-width: 900px) {
+  .project-detail--3d-hero .project-detail__backdrop,
+  .project-detail--3d-hero.project-detail--hero-right .project-detail__backdrop {
+    background: none;
+  }
+
+  .project-detail--3d-hero .project-detail__hero--3d {
+    display: none;
+  }
+
   .project-detail__layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
