@@ -225,6 +225,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
   galleryItem('20', '/videos/4mains_reduce.webm', '4 Mains', 'Mini-documentaire sur une collaboration entre deux chefs.', {
     category: 'films',
     simpleOrder: 3,
+    href: 'https://vimeo.com/1211364205',
     favorite: true,
     colors: bg('#97010a', '#788a85', '#788a85', '#97010a'),
     details: {
@@ -298,24 +299,24 @@ export const GALLERY_ITEMS: GalleryItem[] = [
         'Intervention sur le site Guerlain : résolution de bugs, livraison de nouvelles features et refonte de pages dans l’esprit premium de la maison. Un travail d’évolution continue, exigeant sur la qualité et la fidélité à la charte.',
     },
   }),
-  galleryItem('26', '/posters/brasserie.png', 'Brasserie', 'Landing scroll — canette 3D et narration au défilement.', {
-    category: 'playground',
-    simpleOrder: 7,
-    favorite: false,
-    href: '/brasserie',
-    colors: bg('#c9a227', '#1a1208', '#e8d5a3', '#0d0906'),
-    details: {
-      year: '2026',
-      role: 'Front-end · 3D · Landing',
-      highlights: [
-        'Intégration du modèle can.glb en WebGL',
-        'Rotation au scroll et fond qui évolue à chaque tour',
-        'Textes latéraux synchronisés avec la narration',
-      ],
-      longDescription:
-        'Landing immersive pour la Brasserie : une canette 3D au centre, qui tourne sur elle-même au scroll. À chaque rotation complète, le fond change de couleur et les textes gauche / droite racontent une nouvelle étape.',
-    },
-  }),
+  // galleryItem('26', '/posters/brasserie.png', 'Brasserie', 'Landing scroll — canette 3D et narration au défilement.', {
+  //   category: 'playground',
+  //   simpleOrder: 7,
+  //   favorite: false,
+  //   href: '/brasserie',
+  //   colors: bg('#c9a227', '#1a1208', '#e8d5a3', '#0d0906'),
+  //   details: {
+  //     year: '2026',
+  //     role: 'Front-end · 3D · Landing',
+  //     highlights: [
+  //       'Intégration du modèle can.glb en WebGL',
+  //       'Rotation au scroll et fond qui évolue à chaque tour',
+  //       'Textes latéraux synchronisés avec la narration',
+  //     ],
+  //     longDescription:
+  //       'Landing immersive pour la Brasserie : une canette 3D au centre, qui tourne sur elle-même au scroll. À chaque rotation complète, le fond change de couleur et les textes gauche / droite racontent une nouvelle étape.',
+  //   },
+  // }),
   galleryItem(
     '27',
     '/posters/quedesnumeros10.png',
